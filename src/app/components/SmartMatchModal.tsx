@@ -7,6 +7,8 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onNext?: () => void;
+  onBack?: () => void;
+  completed?: boolean;
   totalNoPhotos?: number;
   /** Baseline days to frontline (dealer's input) */
   daysBaseline?: number;
@@ -270,7 +272,7 @@ function MatchCard({ card }: { card: MatchCard }) {
 // ─── Modal ────────────────────────────────────────────────────────────────────
 
 export function SmartMatchModal({
-  open, onClose, onNext, totalNoPhotos = 90,
+  open, onClose, onNext, onBack, completed, totalNoPhotos = 90,
   daysBaseline = 8.2, holdingPerDay = 38,
 }: Props) {
   // Smart Match cuts the dealer's frontline cycle roughly in half
@@ -426,6 +428,12 @@ export function SmartMatchModal({
                     <Zap size={10} />
                     New vehicles only
                   </span>
+                  {completed && (
+                    <span className="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-[rgba(16,185,129,0.12)] text-[#059669] text-[10px] font-bold uppercase tracking-[0.6px]">
+                      <Check size={10} strokeWidth={3} />
+                      Completed
+                    </span>
+                  )}
                 </div>
                 <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
                   Reusing studio media from spec-matched VINs already on your lot.
@@ -520,13 +528,16 @@ export function SmartMatchModal({
             <span className="text-[#0a0a0a] font-semibold ml-[2px]">−{reductionPct}%</span>
           </div>
           <div className="flex items-center gap-[10px]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-[40px] px-[18px] rounded-[10px] bg-white border border-black/15 text-[#0a0a0a] text-[13px] font-semibold font-['Inter:Semi_Bold',sans-serif] hover:bg-[#fafafa] transition-colors"
-            >
-              Run in background
-            </button>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="h-[40px] px-[16px] rounded-[10px] inline-flex items-center gap-[6px] text-[13px] font-semibold text-[#0a0a0a] hover:bg-black/5 transition-colors font-['Inter:Semi_Bold',sans-serif]"
+              >
+                <ArrowRight size={14} strokeWidth={2.5} className="rotate-180" />
+                Back
+              </button>
+            )}
             {onNext && (
               <button
                 type="button"

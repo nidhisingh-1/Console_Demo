@@ -231,6 +231,17 @@ export function ScanningScreen({
     | "cgiUpgrade"
     | "done";
   const [stage, setStage] = useState<Stage>("scanning");
+  // Stages the user has previously moved past — so revisiting via Back shows a "Completed" chip
+  const [completedStages, setCompletedStages] = useState<Set<Stage>>(new Set());
+  const advanceTo = (next: Stage) => {
+    setCompletedStages((prev) => {
+      const copy = new Set(prev);
+      copy.add(stage);
+      return copy;
+    });
+    setStage(next);
+  };
+  const goBackTo = (prev: Stage) => setStage(prev);
 
   // After 8s of scanning, surface the inventory snapshot modal
   useEffect(() => {
@@ -403,26 +414,32 @@ export function ScanningScreen({
         noPhotos={90}
         rawPhotos={67}
         cgiPhotos={134}
-        onStart={() => setStage("merchandisingPitch")}
+        onStart={() => advanceTo("merchandisingPitch")}
       />
 
       <MerchandisingPitchModal
         open={stage === "merchandisingPitch"}
+        completed={completedStages.has("merchandisingPitch")}
         onClose={() => setStage("done")}
-        onContinue={() => setStage("rawTransform")}
+        onBack={() => goBackTo("snapshot")}
+        onContinue={() => advanceTo("rawTransform")}
       />
 
       <RawPhotoTransformModal
         open={stage === "rawTransform"}
         totalRaw={67}
+        stageCompleted={completedStages.has("rawTransform")}
         onClose={() => setStage("done")}
-        onNext={() => setStage("smartMatchPitch")}
+        onBack={() => goBackTo("merchandisingPitch")}
+        onNext={() => advanceTo("smartMatchPitch")}
       />
 
       <SmartMatchPitchModal
         open={stage === "smartMatchPitch"}
+        completed={completedStages.has("smartMatchPitch")}
         onClose={() => setStage("done")}
-        onContinue={() => setStage("smartMatch")}
+        onBack={() => goBackTo("rawTransform")}
+        onContinue={() => advanceTo("smartMatch")}
       />
 
       <SmartMatchModal
@@ -430,14 +447,18 @@ export function ScanningScreen({
         totalNoPhotos={90}
         daysBaseline={benchmarks.daysToFrontline}
         holdingPerDay={benchmarks.holdingCostPerDay}
+        completed={completedStages.has("smartMatch")}
         onClose={() => setStage("done")}
-        onNext={() => setStage("cgiUpgrade")}
+        onBack={() => goBackTo("smartMatchPitch")}
+        onNext={() => advanceTo("cgiUpgrade")}
       />
 
       <CGIUpgradeModal
         open={stage === "cgiUpgrade"}
         totalCgi={134}
+        completed={completedStages.has("cgiUpgrade")}
         onClose={() => { setStage("done"); onFinish?.(); }}
+        onBack={() => goBackTo("smartMatch")}
         onNext={() => { setStage("done"); onFinish?.(); }}
       />
     </div>

@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
   onNext?: () => void;
   onBack?: () => void;
-  completed?: boolean;
+  stageCompleted?: boolean;
   totalRaw?: number;
 }
 
@@ -205,7 +205,7 @@ function TransformCard({ card, index }: { card: Card; index: number }) {
 
 // ─── Modal shell ─────────────────────────────────────────────────────────────
 
-export function RawPhotoTransformModal({ open, onClose, onNext, onBack, completed, totalRaw = 67 }: Props) {
+export function RawPhotoTransformModal({ open, onClose, onNext, onBack, stageCompleted, totalRaw = 67 }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -345,7 +345,7 @@ export function RawPhotoTransformModal({ open, onClose, onNext, onBack, complete
                 <Wand2 size={22} />
               </div>
               <div>
-                <div className="flex items-center gap-[8px]">
+                <div className="flex items-center gap-[8px] flex-wrap">
                   <h2 className="text-[20px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[26px]">
                     Transforming raw photos
                   </h2>
@@ -353,6 +353,12 @@ export function RawPhotoTransformModal({ open, onClose, onNext, onBack, complete
                     <Sparkles size={10} />
                     Smart Studio
                   </span>
+                  {stageCompleted && (
+                    <span className="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-[rgba(16,185,129,0.12)] text-[#059669] text-[10px] font-bold uppercase tracking-[0.6px]">
+                      <Check size={10} strokeWidth={3} />
+                      Completed
+                    </span>
+                  )}
                 </div>
                 <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
                   Swapping lot backgrounds for clean studio media.
@@ -410,13 +416,18 @@ export function RawPhotoTransformModal({ open, onClose, onNext, onBack, complete
             Ford Sec 48 · brand-tuned background
           </div>
           <div className="flex items-center gap-[10px]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-[40px] px-[18px] rounded-[10px] bg-white border border-black/15 text-[#0a0a0a] text-[13px] font-semibold font-['Inter:Semi_Bold',sans-serif] hover:bg-[#fafafa] transition-colors"
-            >
-              Run in background
-            </button>
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="h-[40px] px-[16px] rounded-[10px] inline-flex items-center gap-[6px] text-[13px] font-semibold text-[#0a0a0a] hover:bg-black/5 transition-colors font-['Inter:Semi_Bold',sans-serif]"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M19 12H5M11 19l-7-7 7-7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Back
+              </button>
+            )}
             {onNext && (
               <button
                 type="button"
