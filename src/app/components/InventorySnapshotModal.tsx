@@ -141,7 +141,7 @@ export function InventorySnapshotModal({
     >
       <div
         ref={panelRef}
-        className="bg-white rounded-[20px] w-full max-w-[760px] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+        className="bg-white rounded-[20px] w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
       >
         {/* Header */}
         <div className="flex items-start justify-between px-[28px] pt-[22px]">
@@ -159,7 +159,7 @@ export function InventorySnapshotModal({
                 Your inventory snapshot
               </h2>
               <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
-                Every VIN scored — here's where you stand.
+                Every vehicle scored — here's where you stand.
               </p>
             </div>
           </div>

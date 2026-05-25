@@ -168,7 +168,7 @@ export function SmartMatchSpotlight({
             </button>
           </div>
           <p className="mt-[8px] text-[14px] font-semibold text-[#0a0a0a] font-['Inter:Semi_Bold',sans-serif] leading-[20px]">
-            This vehicle had no photos. Smart Match added media from a spec-matched VIN
+            This vehicle had no photos. Smart Match added media from a matching vehicle
             {published ? (
               <> and <span className="text-[#10B981]">took it live</span>.</>
             ) : (
@@ -176,7 +176,7 @@ export function SmartMatchSpotlight({
             )}
           </p>
           <p className="mt-[4px] text-[12px] text-black/55 font-['Inter:Regular',sans-serif] leading-[16px]">
-            Any VIN tagged Smart Match is running on spec-matched media instead of original photos.
+            Any listing tagged Smart Match is running on borrowed media instead of original photos.
           </p>
           <div className="mt-[12px] flex justify-end">
             <button

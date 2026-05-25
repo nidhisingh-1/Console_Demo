@@ -515,8 +515,9 @@ export function DashboardScreen({
   onNavigate,
 }: DashboardScreenProps = {}) {
   // Derived demo numbers, calibrated from the dealer's inputs
-  const daysAfterSmartMatch = Math.round((benchmarks.daysToFrontline / 2) * 10) / 10;
-  const daysAfterPublish = Math.round((benchmarks.daysToFrontline * 0.15) * 10) / 10;
+  // Smart Match collapses frontline cycle to ~1 day; publishing keeps it there.
+  const daysAfterSmartMatch = 1;
+  const daysAfterPublish = 1;
   const daysSavedTransform = Math.round((benchmarks.daysToFrontline - daysAfterSmartMatch) * 10) / 10;
   const containerRef = useRef<HTMLDivElement>(null);
   const [summaryOpen, setSummaryOpen] = useState(true);

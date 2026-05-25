@@ -15,28 +15,28 @@ type IMS = {
 };
 
 const PRIMARY_IMS: IMS[] = [
-  { id: "vincue",        name: "Vincue",              tagline: "Inventory & pricing intelligence", initials: "V",   bg: "#1490DF", fg: "#fff" },
-  { id: "vinsolutions",  name: "VinSolutions",        tagline: "Cox Automotive CRM + IMS",         initials: "VS",  bg: "#0061FF", fg: "#fff" },
-  { id: "dealersocket",  name: "DealerSocket",        tagline: "CRM and inventory suite",          initials: "DS",  bg: "#E83E54", fg: "#fff" },
-  { id: "cdk",           name: "CDK Global",          tagline: "Dealer management system",         initials: "CDK", bg: "#00832D", fg: "#fff" },
-  { id: "reynolds",      name: "Reynolds & Reynolds", tagline: "Retail management system",         initials: "R&R", bg: "#402387", fg: "#fff" },
+  { id: "vincue",        name: "Vincue",              tagline: "Inventory & pricing",            initials: "V",   bg: "#1490DF", fg: "#fff" },
+  { id: "vinsolutions",  name: "VinSolutions",        tagline: "Cox Automotive",                 initials: "VS",  bg: "#0061FF", fg: "#fff" },
+  { id: "dealersocket",  name: "DealerSocket",        tagline: "CRM and inventory",              initials: "DS",  bg: "#E83E54", fg: "#fff" },
+  { id: "cdk",           name: "CDK Global",          tagline: "Dealer management",              initials: "CDK", bg: "#00832D", fg: "#fff" },
+  { id: "reynolds",      name: "Reynolds & Reynolds", tagline: "Retail management",              initials: "R&R", bg: "#402387", fg: "#fff" },
 ];
 
 const MORE_IMS: IMS[] = [
-  { id: "homenet",     name: "HomeNet Automotive",  tagline: "Cox inventory management",          initials: "HN",  bg: "#0066DA", fg: "#fff" },
-  { id: "dealertrack", name: "Dealertrack DMS",     tagline: "Cox dealer management",             initials: "DT",  bg: "#28A8EA", fg: "#fff" },
+  { id: "homenet",     name: "HomeNet Automotive",  tagline: "Cox inventory",                     initials: "HN",  bg: "#0066DA", fg: "#fff" },
+  { id: "dealertrack", name: "Dealertrack",         tagline: "Cox dealer management",             initials: "DT",  bg: "#28A8EA", fg: "#fff" },
   { id: "automate",    name: "Auto/Mate",           tagline: "DealerSocket DMS",                  initials: "AM",  bg: "#FF7700", fg: "#fff" },
-  { id: "dealercom",   name: "Dealer.com",          tagline: "Website + inventory feed",          initials: "DC",  bg: "#B651D7", fg: "#fff" },
-  { id: "elead",       name: "eLead CRM",           tagline: "CDK customer relationship",         initials: "eL",  bg: "#7F6AF2", fg: "#fff" },
-  { id: "autotrader",  name: "AutoTrader Feed",     tagline: "Marketplace inventory feed",        initials: "AT",  bg: "#FFCC00", fg: "#0a0a0a" },
-  { id: "carscom",     name: "Cars.com Feed",       tagline: "Marketplace inventory feed",        initials: "C",   bg: "#FF003D", fg: "#fff" },
+  { id: "dealercom",   name: "Dealer.com",          tagline: "Website + inventory",               initials: "DC",  bg: "#B651D7", fg: "#fff" },
+  { id: "elead",       name: "eLead",               tagline: "CDK customer relationship",         initials: "eL",  bg: "#7F6AF2", fg: "#fff" },
+  { id: "autotrader",  name: "AutoTrader Feed",     tagline: "Marketplace listings",              initials: "AT",  bg: "#FFCC00", fg: "#0a0a0a" },
+  { id: "carscom",     name: "Cars.com Feed",       tagline: "Marketplace listings",              initials: "C",   bg: "#FF003D", fg: "#fff" },
   { id: "vauto",       name: "vAuto",               tagline: "Cox pricing & inventory",           initials: "vA",  bg: "#5BBFF6", fg: "#fff" },
-  { id: "promax",      name: "ProMax DMS",          tagline: "Dealer management",                 initials: "PM",  bg: "#00C488", fg: "#fff" },
-  { id: "frazer",      name: "Frazer DMS",          tagline: "Independent dealer DMS",            initials: "Fr",  bg: "#433D4B", fg: "#fff" },
-  { id: "dealercenter",name: "DealerCenter",        tagline: "Independent dealer platform",       initials: "DC",  bg: "#01C6DC", fg: "#fff" },
-  { id: "wayne-reaves",name: "Wayne Reaves",        tagline: "Independent dealer software",       initials: "WR",  bg: "#ED8939", fg: "#fff" },
+  { id: "promax",      name: "ProMax",              tagline: "Dealer management",                 initials: "PM",  bg: "#00C488", fg: "#fff" },
+  { id: "frazer",      name: "Frazer",              tagline: "Independent dealer",                initials: "Fr",  bg: "#433D4B", fg: "#fff" },
+  { id: "dealercenter",name: "DealerCenter",        tagline: "Independent dealer",                initials: "DC",  bg: "#01C6DC", fg: "#fff" },
+  { id: "wayne-reaves",name: "Wayne Reaves",        tagline: "Independent dealer",                initials: "WR",  bg: "#ED8939", fg: "#fff" },
   { id: "tekion",      name: "Tekion",              tagline: "Automotive retail cloud",           initials: "Tk",  bg: "#4600F2", fg: "#fff" },
-  { id: "quorum",      name: "Quorum DMS",          tagline: "Dealer management system",          initials: "Qm",  bg: "#FFBA00", fg: "#0a0a0a" },
+  { id: "quorum",      name: "Quorum",              tagline: "Dealer management",                 initials: "Qm",  bg: "#FFBA00", fg: "#0a0a0a" },
 ];
 
 const ALL_IMS = [...PRIMARY_IMS, ...MORE_IMS];
@@ -125,10 +125,10 @@ function IMSModal({
         <div className="flex items-center justify-between px-[24px] py-[18px] border-b border-black/8">
           <div>
             <h2 className="text-[18px] font-semibold text-[#0a0a0a] font-['Inter:Semi_Bold',sans-serif]">
-              Select your IMS
+              Select your inventory system
             </h2>
             <p className="text-[12px] text-black/50 font-['Inter:Regular',sans-serif] mt-[2px]">
-              {ALL_IMS.length}+ integrations supported
+              {ALL_IMS.length}+ inventory systems supported
             </p>
           </div>
           <button
@@ -192,7 +192,7 @@ function IMSModal({
             })}
             {results.length === 0 && (
               <p className="col-span-2 text-center text-[13px] text-black/40 py-[40px]">
-                No IMS found matching "{query}"
+                Nothing matches "{query}"
               </p>
             )}
           </div>
@@ -248,7 +248,7 @@ export function IMSImportScreen({ onImport }: Props) {
                 Import your inventory
               </h1>
               <p className="mt-[6px] text-[14px] text-black/50 font-['Inter:Medium',sans-serif] font-medium">
-                Pick your IMS — we'll sync vehicles, photos and pricing.
+                Where do you want to import your inventory from?
               </p>
             </div>
 
@@ -258,7 +258,7 @@ export function IMSImportScreen({ onImport }: Props) {
               className="bg-white rounded-[16px] border border-black/5 p-[32px] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
             >
               <p className="text-[14px] font-semibold text-black/80 font-['Inter:Semi_Bold',sans-serif] mb-[16px]">
-                Select your IMS
+                Select your inventory system
               </p>
 
               <div className="grid grid-cols-3 gap-[12px]">
@@ -312,7 +312,7 @@ export function IMSImportScreen({ onImport }: Props) {
                       Browse all
                     </p>
                     <p className="text-[11px] text-black/50 font-['Inter:Regular',sans-serif]">
-                      {ALL_IMS.length} integrations
+                      {ALL_IMS.length} systems
                     </p>
                   </div>
                   <ChevronRight size={16} className="text-black/40 shrink-0" />
@@ -408,7 +408,7 @@ export function IMSImportScreen({ onImport }: Props) {
                   icon={<Layers size={20} />}
                   eyebrow="Smart Match"
                   title="Reuse media for same-spec new vehicles"
-                  body="Same trim, same color — spec-matched VINs share studio media. No reshoots."
+                  body="Same trim, same color — matching vehicles share studio media. No reshoots."
                   accent="#00C488"
                 />
               </div>

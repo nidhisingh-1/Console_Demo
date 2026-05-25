@@ -127,7 +127,7 @@ export function SmartMatchPitchModal({ open, onClose, onContinue, onBack, comple
       <div
         ref={panelRef}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-[20px] w-full max-w-[920px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+        className="bg-white rounded-[20px] w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
       >
         <div className="absolute top-[16px] right-[16px] z-10 flex items-center gap-[10px]">
           {completed && (
@@ -172,7 +172,7 @@ export function SmartMatchPitchModal({ open, onClose, onContinue, onBack, comple
             <div className="relative rounded-[14px] overflow-hidden border border-black/8 bg-[#FAFAFB]">
               <img
                 src={imgSmartMatch}
-                alt="SmartMatch: VIN identified → spec-matched media replicated"
+                alt="SmartMatch: vehicle identified, matching media replicated"
                 className="block w-full h-auto"
               />
               <div
@@ -210,7 +210,7 @@ export function SmartMatchPitchModal({ open, onClose, onContinue, onBack, comple
             <div className="mt-[12px] grid grid-cols-2 gap-[10px]">
               <FeatureCard icon={<Rocket size={18} strokeWidth={2.2} />}    title="Go Live Instantly"    tagline="Skip the shoot. Publish in seconds." accent="#4600F2" />
               <FeatureCard icon={<Calendar size={18} strokeWidth={2.2} />}  title="List Before It Lands" tagline="Live days before the car arrives." accent="#10B981" />
-              <FeatureCard icon={<Search size={18} strokeWidth={2.2} />}    title="Smart VIN Matching"   tagline="Year, make, model, trim, color." accent={MAGENTA} />
+              <FeatureCard icon={<Search size={18} strokeWidth={2.2} />}    title="Smart matching"      tagline="Year, make, model, trim, color." accent={MAGENTA} />
               <FeatureCard icon={<Eye size={18} strokeWidth={2.2} />}       title="Capture Early Demand" tagline="Visible when competitors aren't." accent="#F59E0B" />
             </div>
           </div>
@@ -224,9 +224,9 @@ export function SmartMatchPitchModal({ open, onClose, onContinue, onBack, comple
               Automated or on-demand. Fits your workflow.
             </h2>
             <div className="mt-[12px] grid grid-cols-4 gap-[12px]">
-              <StepBlock n="01" title="VIN Detected"     tagline="New VIN enters your feed."        accent={MAGENTA} />
+              <StepBlock n="01" title="Vehicle detected" tagline="New listing enters your feed."    accent={MAGENTA} />
               <StepBlock n="02" title="Match Found"      tagline="Spec-matched donor located."      accent={MAGENTA} />
-              <StepBlock n="03" title="Media Replicated" tagline="Full set copied to new VIN."      accent={MAGENTA} />
+              <StepBlock n="03" title="Media Replicated" tagline="Full set copied to new vehicle." accent={MAGENTA} />
               <StepBlock n="04" title="Listing Live"     tagline="Published before car arrives."    accent={MAGENTA} />
             </div>
           </div>
@@ -242,7 +242,7 @@ export function SmartMatchPitchModal({ open, onClose, onContinue, onBack, comple
             <div className="mt-[12px] grid grid-cols-3 gap-[10px]">
               <BuiltForCard title="New Vehicle Restocks"  tagline="Live before transport arrives."  accent={MAGENTA} />
               <BuiltForCard title="Repeat Variants & Trims" tagline="Best-sellers never cost a day." accent="#F43F5E" />
-              <BuiltForCard title="Multi-Rooftop Groups"   tagline="One shoot, every location."     accent={PURPLE} />
+              <BuiltForCard title="Multi-location groups"  tagline="One shoot, every location."     accent={PURPLE} />
             </div>
           </div>
         </div>

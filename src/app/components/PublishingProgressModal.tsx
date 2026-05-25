@@ -165,7 +165,7 @@ export function PublishingProgressModal({
     >
       <div
         ref={panelRef}
-        className="bg-white rounded-[20px] w-full max-w-[820px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+        className="bg-white rounded-[20px] w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
       >
         {/* Header */}
         <div className="px-[28px] pt-[22px] pb-[18px] border-b border-black/8">

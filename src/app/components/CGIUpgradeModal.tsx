@@ -144,7 +144,7 @@ function UpgradeDiagram() {
         </div>
       </div>
       <p className="mt-[14px] text-[12px] text-black/55 text-center font-['Inter:Regular',sans-serif] leading-[18px] max-w-[560px] mx-auto">
-        Same trim, same color — real photography from a VIN already on your lot.
+        Same trim, same color — real photos from a vehicle already on your lot.
       </p>
     </div>
   );
@@ -415,7 +415,7 @@ export function CGIUpgradeModal({ open, onClose, onNext, onBack, completed, tota
                   )}
                 </div>
                 <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
-                  Swapping renders for studio photos from spec-matched VINs.
+                  Swapping renders for studio photos from matching vehicles.
                 </p>
               </div>
             </div>
@@ -450,7 +450,7 @@ export function CGIUpgradeModal({ open, onClose, onNext, onBack, completed, tota
               <Award size={18} className="shrink-0 text-[#10B981]" />
               <p className="text-[12px] text-black/70 font-['Inter:Medium',sans-serif] font-medium leading-[16px]">
                 Authentic photography<br />
-                <span className="text-[#0a0a0a] font-semibold">on every eligible VIN</span>
+                <span className="text-[#0a0a0a] font-semibold">on every eligible vehicle</span>
               </p>
             </div>
           </div>
@@ -489,7 +489,7 @@ export function CGIUpgradeModal({ open, onClose, onNext, onBack, completed, tota
           </div>
 
           <p className="mt-[14px] text-[11px] text-black/45 text-center font-['Inter:Regular',sans-serif] leading-[16px]">
-            VINs without a spec-matched donor stay on their current media until the next Spyne Studio capture.
+            Vehicles without a matching donor stay on their current media until the next Spyne Studio capture.
           </p>
         </div>
 

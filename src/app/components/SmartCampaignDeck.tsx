@@ -181,7 +181,7 @@ export function SmartCampaignDeck({ open, onClose }: Props) {
                 Win the attention battle.
               </h1>
               <p className="mt-[10px] text-[13px] text-black/60 font-['Inter:Regular',sans-serif]">
-                Branded creatives across every VIN — automatically.
+                Branded creatives across every listing — automatically.
               </p>
             </div>
             <div className="relative rounded-[14px] overflow-hidden border border-black/8 bg-[#FAFAFB]">
@@ -209,8 +209,8 @@ export function SmartCampaignDeck({ open, onClose }: Props) {
             <div className="grid grid-cols-2 gap-[10px]">
               <Pointer icon={<ImageOff size={15} />} text="Every listing looks the same" />
               <Pointer icon={<Timer size={15} />}    text="Aged inventory left untouched" />
-              <Pointer icon={<Building2 size={15} />} text="Inconsistent across rooftops" />
-              <Pointer icon={<Eye size={15} />}      text="No VIN-level preview before live" />
+              <Pointer icon={<Building2 size={15} />} text="Inconsistent across locations" />
+              <Pointer icon={<Eye size={15} />}      text="No preview before going live" />
             </div>
           </div>
 
@@ -220,7 +220,7 @@ export function SmartCampaignDeck({ open, onClose }: Props) {
           <div data-section>
             <Eyebrow>The Solution</Eyebrow>
             <h2 className="text-[18px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[22px]">
-              Automated visual campaigns across every VIN.
+              Automated visual campaigns across every listing.
             </h2>
             <div className="mt-[12px] grid grid-cols-2 gap-[10px]">
               <FeatureCard
@@ -284,12 +284,12 @@ export function SmartCampaignDeck({ open, onClose }: Props) {
               <BuiltForCard
                 icon={<Snowflake size={14} strokeWidth={2.2} />}
                 title="Seasonal Promotions"
-                tagline="Holidays, OEM offers, month-end."
+                tagline="Holidays, manufacturer offers, month-end."
                 accent="#F43F5E"
               />
               <BuiltForCard
                 icon={<Building2 size={14} strokeWidth={2.2} />}
-                title="Multi-Rooftop"
+                title="Multi-location"
                 tagline="One brand, every location."
                 accent={PURPLE}
               />

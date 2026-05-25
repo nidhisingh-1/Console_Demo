@@ -107,7 +107,7 @@ export function MerchandisingPitchModal({ open, onClose, onContinue, onBack, com
       <div
         ref={panelRef}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-[20px] w-full max-w-[920px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+        className="bg-white rounded-[20px] w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
       >
         <div className="absolute top-[16px] right-[16px] z-10 flex items-center gap-[10px]">
           {completed && (

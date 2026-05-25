@@ -76,7 +76,7 @@ function Calc({
           </p>
           <p className="mt-[2px] text-[20px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-none">
             ${total.toFixed(2)}
-            <span className="text-[12px] text-black/45 font-medium ml-[4px]">/ day per VIN</span>
+            <span className="text-[12px] text-black/45 font-medium ml-[4px]">/ day per vehicle</span>
           </p>
           <p className="mt-[4px] text-[10px] text-black/45 font-['Inter:Regular',sans-serif]">
             ${floorPlanPerDay.toFixed(2)} floor plan + ${other.toFixed(2)} other

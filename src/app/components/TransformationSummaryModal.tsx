@@ -206,7 +206,7 @@ export function TransformationSummaryModal({
     >
       <div
         ref={panelRef}
-        className="bg-white rounded-[20px] w-full max-w-[820px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+        className="bg-white rounded-[20px] w-full max-w-[1080px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
       >
         {/* Header */}
         <div className="relative px-[28px] pt-[22px] pb-[18px] border-b border-black/8">
@@ -226,7 +226,7 @@ export function TransformationSummaryModal({
               <div>
                 <div className="flex items-center gap-[8px] flex-wrap">
                   <h2 className="text-[20px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[26px]">
-                    Your inventory is studio-ready
+                    Your inventory is ready to sell
                   </h2>
                   <span className="inline-flex items-center gap-[4px] px-[8px] py-[2px] rounded-full bg-[rgba(16,185,129,0.12)] text-[#059669] text-[10px] font-bold uppercase tracking-[0.6px]">
                     <Check size={10} strokeWidth={3} />
@@ -261,7 +261,7 @@ export function TransformationSummaryModal({
               label="Days to Frontline saved"
               value={summary.daysSaved}
               decimals={1}
-              suffix={`days / VIN`}
+              suffix={`days / vehicle`}
               accent="#4600F2"
               icon={<Clock size={16} />}
             />
@@ -275,7 +275,7 @@ export function TransformationSummaryModal({
             />
             <ImpactStat
               open={open}
-              label="Vehicles studio-ready"
+              label="Vehicles ready to sell"
               value={Math.min(totalFixed, summary.totalInventory)}
               denominator={summary.totalInventory}
               accent="#F59E0B"
