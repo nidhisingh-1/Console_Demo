@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import {
-  ChevronDown, Plus, Sparkles, Filter, Download, Eye, MoreVertical,
-  Monitor, Copy, Layers, Image as ImageIcon, AlertCircle, AlertTriangle, Camera,
-  CircleDot,
+  ChevronDown, Plus, Sparkles, Filter, Download, Eye,
+  Image as ImageIcon, AlertCircle, Camera, CircleDot,
 } from "lucide-react";
-import imgCar from "../../imports/Frame2147240604/5dc495ae052ef514c9683fd2a095ba455d93a330.png";
 import { AppHeader, AppSidebar } from "./AppShell";
 import {
   TransformationSummaryModal,
@@ -15,12 +13,14 @@ import { PublishModal } from "./PublishModal";
 import { PublishingProgressModal } from "./PublishingProgressModal";
 import { PublishedSummaryModal } from "./PublishedSummaryModal";
 import { SyndicationPitchModal } from "./SyndicationPitchModal";
-import { PublishingCell } from "./PublishingCell";
 import { SelectionActionBar } from "./SelectionActionBar";
 import { SmartCampaignModal } from "./SmartCampaignModal";
 import { SmartMatchSpotlight } from "./SmartMatchSpotlight";
 import { NeedActionsWidget, NeedActionsButton } from "./NeedActionsWidget";
 import type { PublishedTo } from "./publishPlatforms";
+import { VehicleRow, ColHeader, type Row } from "./shared/VehicleRow";
+import { FilterChip } from "./shared/FilterChip";
+import { SummaryCard, MiniBars, ActionRequiredCard } from "./shared/KpiCards";
 
 // ─── Atomic pieces ────────────────────────────────────────────────────────────
 
@@ -51,173 +51,7 @@ function Tab({ label, count, active }: { label: string; count?: number; active?:
   );
 }
 
-function MiniBars() {
-  // Small bar chart visual (8 bars, alternating heights)
-  const heights = [50, 70, 45, 80, 35, 65, 55, 75];
-  return (
-    <div className="flex items-end gap-[3px] h-[36px]">
-      {heights.map((h, i) => (
-        <div
-          key={i}
-          className="w-[5px] rounded-sm bg-[#CBD5E1]"
-          style={{ height: `${h}%` }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function SummaryCard({
-  label, value, suffix, accent, right,
-}: {
-  label: string;
-  value: string;
-  suffix?: string;
-  accent: string;
-  right?: React.ReactNode;
-}) {
-  return (
-    <div className="flex-1 rounded-[14px] border border-black/8 bg-white px-[20px] py-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-      <div className="flex items-center justify-between gap-[10px]">
-        <div>
-          <div className="flex items-center gap-[6px]">
-            <span className="size-[8px] rounded-full" style={{ backgroundColor: accent }} />
-            <p className="text-[12px] font-semibold text-black/55 font-['Inter:Semi_Bold',sans-serif] uppercase tracking-[0.3px]">
-              {label}
-            </p>
-          </div>
-          <div className="mt-[8px] flex items-baseline gap-[6px]">
-            <span className="text-[28px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-none">
-              {value}
-            </span>
-            {suffix && (
-              <span className="text-[14px] text-black/55 font-medium">{suffix}</span>
-            )}
-          </div>
-        </div>
-        {right}
-      </div>
-    </div>
-  );
-}
-
-function ActionRequiredCard({
-  label, value, icon, color,
-}: { label: string; value: number; icon: React.ReactNode; color: string }) {
-  return (
-    <div className="flex-1 rounded-[12px] border border-black/8 bg-white px-[14px] py-[12px] flex items-center gap-[12px]">
-      <div
-        className="size-[36px] rounded-[10px] flex items-center justify-center shrink-0"
-        style={{ background: `${color}1A`, color }}
-      >
-        {icon}
-      </div>
-      <div>
-        <p className="text-[13px] font-semibold text-[#0a0a0a] font-['Inter:Semi_Bold',sans-serif]">
-          {label}
-        </p>
-        <p className="text-[12px] text-black/45 font-['Inter:Regular',sans-serif] mt-[1px]">
-          {value} vehicles
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function FilterChip({
-  label, count, active, pulse, onClick,
-}: {
-  label: string;
-  count?: number;
-  active?: boolean;
-  /** When true, chip gets a red pulsing ring to draw attention */
-  pulse?: boolean;
-  onClick?: () => void;
-}) {
-  const ringRef = useRef<HTMLSpanElement>(null);
-
-  // GSAP-driven pulsing red ring (used to nudge the user toward "Age >40/>60 days")
-  useEffect(() => {
-    const el = ringRef.current;
-    if (!el) return;
-    if (!pulse || active) {
-      gsap.killTweensOf(el);
-      gsap.set(el, { boxShadow: "0 0 0 0 rgba(239,68,68,0)", scale: 1 });
-      return;
-    }
-    const tween = gsap.fromTo(
-      el,
-      { boxShadow: "0 0 0 0 rgba(239,68,68,0.55)", scale: 1 },
-      {
-        boxShadow: "0 0 0 8px rgba(239,68,68,0)",
-        scale: 1.04,
-        duration: 1.2,
-        repeat: -1,
-        yoyo: false,
-        ease: "power1.out",
-      }
-    );
-    return () => { tween.kill(); };
-  }, [pulse, active]);
-
-  const ring = pulse ? "border-[#EF4444]/70" : active ? "border-[#4600F2]" : "border-black/10";
-  const fg = pulse ? "text-[#B91C1C]" : active ? "text-[#4600F2]" : "text-black/70";
-  const bg = active
-    ? "bg-[rgba(70,0,242,0.08)]"
-    : pulse
-      ? "bg-[#FEF2F2]"
-      : "bg-white hover:bg-[#fafafa]";
-
-  return (
-    <span ref={ringRef} className="inline-flex rounded-full">
-      <button
-        type="button"
-        onClick={onClick}
-        className={`inline-flex items-center gap-[6px] h-[30px] px-[12px] rounded-full border text-[12px] font-medium transition-colors font-['Inter:Medium',sans-serif] ${ring} ${bg} ${fg}`}
-      >
-        {pulse && !active && (
-          <AlertTriangle size={11} strokeWidth={2.5} className="text-[#EF4444]" />
-        )}
-        {label}
-        {typeof count === "number" && (
-          <span
-            className={`text-[10px] font-semibold px-[6px] py-[1px] rounded-full ${
-              pulse && !active
-                ? "bg-[#EF4444]/15 text-[#B91C1C]"
-                : active
-                ? "bg-[#4600F2]/15 text-[#4600F2]"
-                : "bg-black/5 text-black/40"
-            }`}
-          >
-            {count}
-          </span>
-        )}
-      </button>
-    </span>
-  );
-}
-
 // ─── Vehicle rows ────────────────────────────────────────────────────────────
-
-type Row = {
-  id: number;
-  name: string;
-  stk: string;
-  vin: string;
-  price: string;
-  date: string;
-  age: number;
-  mediaScore: number;
-  daysToFrontline: number;
-  holdCost: number;
-  marginPct: number;
-  totalMargin: number;
-  smartMatch?: boolean;
-  /** Aged / loss-leader vehicles — render red holding cost + alert icon */
-  isLoss?: boolean;
-  /** Loss in dollars/day (rendered as "-$X loss" caption) */
-  lossPerDay?: number;
-};
 
 const rows: Row[] = [
   {
@@ -358,151 +192,6 @@ const rows: Row[] = [
     lossPerDay: 240,
   },
 ];
-
-function VehicleRow({
-  row, published, selected, onToggle, spotlit, onOpen,
-}: {
-  row: Row;
-  published: PublishedTo[];
-  selected: boolean;
-  onToggle: () => void;
-  spotlit?: boolean;
-  onOpen?: () => void;
-}) {
-  const ageClass = row.isLoss
-    ? "text-[#EF4444]"
-    : "text-[#374151]";
-  return (
-    <tr
-      onClick={onOpen}
-      className={`border-b border-black/5 transition-colors cursor-pointer ${
-        spotlit
-          ? "siri-row-glow bg-[rgba(127,106,242,0.06)]"
-          : selected
-            ? "bg-[rgba(70,0,242,0.04)]"
-            : row.isLoss ? "bg-[#FEF2F2]/40 hover:bg-[#FEF2F2]" : "hover:bg-[#FAFAFB]"
-      }`}
-    >
-      <td className="pl-4 pr-2 py-3 w-10" onClick={(e) => e.stopPropagation()}>
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onToggle}
-          className="w-4 h-4 rounded border-gray-300 accent-[#4600f2] cursor-pointer"
-        />
-      </td>
-      {/* Vehicle */}
-      <td className="py-3 pr-4">
-        <div className="flex items-center gap-3">
-          <img
-            src={imgCar}
-            alt=""
-            className="w-[68px] h-[48px] object-cover rounded-[6px] bg-gray-100"
-          />
-          <div>
-            <p className="text-[13px] font-semibold text-[#111] font-['Inter:Semi_Bold',sans-serif]">
-              {row.name}
-            </p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[11px] text-[#6B7280]">{row.stk}</span>
-              <span className="text-[#D1D5DB]">•</span>
-              <span className="text-[11px] text-[#6B7280]">{row.vin}</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-gray-400">
-                <rect x="5" y="5" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
-                <path d="M9 9h6M9 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </div>
-            <p className="text-[12px] text-[#374151] mt-0.5 font-medium">{row.price}</p>
-          </div>
-        </div>
-      </td>
-      {/* Age — now also carries the date */}
-      <td className="py-3 pr-4 whitespace-nowrap">
-        <p className={`text-[13px] font-semibold ${ageClass}`}>
-          {row.age} days
-          {row.isLoss && (
-            <AlertTriangle size={11} className="inline-block ml-[4px] -mt-[2px] text-[#EF4444]" />
-          )}
-        </p>
-        <p className="text-[11px] text-[#9CA3AF] mt-0.5 font-['Inter:Regular',sans-serif]">{row.date}</p>
-      </td>
-      {/* Media */}
-      <td className="py-3 pr-4">
-        <div className="flex flex-col items-start gap-[4px]">
-          <div className="flex items-center gap-1">
-            {[Monitor, Eye, Copy].map((Icon, i) => (
-              <button key={i} className="p-1 rounded hover:bg-gray-100 text-[#9CA3AF]">
-                <Icon size={15} />
-              </button>
-            ))}
-          </div>
-          {row.smartMatch && (
-            <span className="smart-match-badge siri-shimmer-bg inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[9px] font-bold text-white font-['Inter:Bold',sans-serif] uppercase tracking-[0.5px] shadow-[0_2px_8px_rgba(127,106,242,0.35)]">
-              <Layers size={9} strokeWidth={2.8} />
-              Smart Match
-            </span>
-          )}
-        </div>
-      </td>
-      {/* Media Score */}
-      <td className="py-3 pr-4">
-        <span className="text-[14px] font-bold text-[#10B981] font-['Inter:Bold',sans-serif]">
-          {row.mediaScore.toFixed(1)}
-        </span>
-      </td>
-      {/* Publishing */}
-      <td className="py-3 pr-4">
-        <PublishingCell published={published} />
-      </td>
-      {/* Days to Frontline */}
-      <td className="py-3 pr-4 text-[13px] font-semibold whitespace-nowrap">
-        {row.isLoss ? (
-          <span className="text-[#9CA3AF]">—</span>
-        ) : (
-          <span className="text-[#10B981]">{row.daysToFrontline} days</span>
-        )}
-      </td>
-      {/* Hold Cost */}
-      <td className="py-3 pr-2">
-        <div className="flex items-start justify-between gap-1">
-          <div className="min-w-0">
-            <span className={`text-[13px] font-bold inline-flex items-center gap-[4px] ${
-              row.isLoss ? "text-[#EF4444]" : "text-[#111]"
-            }`}>
-              ${row.holdCost.toLocaleString()}
-              {row.isLoss && <AlertTriangle size={12} strokeWidth={2.5} />}
-            </span>
-            <div className="mt-1 w-[100px] h-[4px] rounded-full bg-gray-100 overflow-hidden">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${row.marginPct}%`,
-                  backgroundColor: row.isLoss ? "#EF4444" : "#10B981",
-                }}
-              />
-            </div>
-            <p className={`text-[10px] mt-0.5 ${row.isLoss ? "text-[#EF4444] font-semibold" : "text-[#9CA3AF]"}`}>
-              {row.isLoss
-                ? `-$${row.lossPerDay}/day loss`
-                : `${row.marginPct}% of $${row.totalMargin.toLocaleString()} margin`}
-            </p>
-          </div>
-          <button className="text-gray-400 hover:text-gray-600 shrink-0 mt-0.5">
-            <MoreVertical size={14} />
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function ColHeader({ label }: { label: string }) {
-  return (
-    <th className="py-3 pr-4 text-left text-[12px] font-medium text-[#6B7280] whitespace-nowrap font-['Inter:Medium',sans-serif]">
-      <span className="flex items-center gap-1">{label}</span>
-    </th>
-  );
-}
 
 // ─── Main dashboard ──────────────────────────────────────────────────────────
 

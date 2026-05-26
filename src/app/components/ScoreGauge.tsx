@@ -16,6 +16,12 @@ interface Props {
   topLabel?: string;
   /** Optional "before" reference value — renders a tick mark on the arc */
   beforeScore?: number;
+  /**
+   * Compact layout — number is moved up inside the arc dome instead of sitting
+   * below the diameter. Use this for inline KPI cards where vertical space is
+   * tight (e.g. Demo 2 dashboard's inventory score).
+   */
+  compact?: boolean;
 }
 
 /**
@@ -32,6 +38,7 @@ export function ScoreGauge({
   animateKey,
   topLabel,
   beforeScore,
+  compact = false,
 }: Props) {
   const W = width;
   const H = Math.round(W * 0.6);
@@ -109,9 +116,17 @@ export function ScoreGauge({
         style={{ overflow: "visible" }}
       >
         <defs>
+          {/*
+            Banded red → amber → green gradient (not a smooth blend).
+            Red dominates 0-50%, amber 50-80%, green only past 80% —
+            so a score of 5.8 visibly stops in the amber band (not green).
+          */}
           <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#EF4444" />
-            <stop offset="50%" stopColor="#F59E0B" />
+            <stop offset="0%"  stopColor="#EF4444" />
+            <stop offset="50%" stopColor="#EF4444" />
+            <stop offset="55%" stopColor="#F59E0B" />
+            <stop offset="80%" stopColor="#F59E0B" />
+            <stop offset="85%" stopColor="#10B981" />
             <stop offset="100%" stopColor="#10B981" />
           </linearGradient>
         </defs>
@@ -160,7 +175,13 @@ export function ScoreGauge({
           </>
         )}
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-end pb-[2px]">
+      <div
+        className={
+          compact
+            ? "absolute inset-0 flex flex-col items-center justify-end pb-[12%]"
+            : "absolute inset-0 flex flex-col items-center justify-end pb-[2px]"
+        }
+      >
         {topLabel && (
           <span className="text-[10px] uppercase tracking-[0.6px] font-semibold text-black/45 mb-[2px] font-['Inter:Semi_Bold',sans-serif]">
             {topLabel}
@@ -168,7 +189,12 @@ export function ScoreGauge({
         )}
         <span
           className="font-bold font-['Inter:Bold',sans-serif] leading-none"
-          style={{ color: scoreColor, fontSize: Math.round(W * 0.225) }}
+          style={{
+            color: scoreColor,
+            // Compact mode shrinks the number a touch so it nests cleanly inside
+            // the arc dome instead of being clipped by the curve.
+            fontSize: Math.round(W * (compact ? 0.20 : 0.225)),
+          }}
         >
           {displayScore.toFixed(1)}
         </span>

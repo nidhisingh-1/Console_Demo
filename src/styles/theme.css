@@ -226,3 +226,24 @@
 .siri-row-glow {
   animation: siri-row-glow 2.8s ease-in-out infinite;
 }
+
+/* Demo 2 — visual marker for a row currently being transformed.
+   The full cascading colour animation is driven by GSAP from Demo2Dashboard;
+   this class is just a hook so we can target the row via [data-transforming]. */
+.demo2-transforming-row {
+  outline: 1px solid rgba(70,0,242,0.35);
+  outline-offset: -1px;
+}
+
+/* Demo 2 — one-shot pop-in when a new state badge first mounts after a
+   transformation completes (Processed / SmartMatched / Campaign Live /
+   syndication platform tiles). */
+@keyframes demo2-badge-pop {
+  0%   { transform: scale(0.55); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+.demo2-badge-pop {
+  animation: demo2-badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}

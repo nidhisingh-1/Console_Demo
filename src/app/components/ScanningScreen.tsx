@@ -205,12 +205,19 @@ interface ScanningScreenProps {
   imsName?: string;
   onFinish?: () => void;
   benchmarks?: { daysToFrontline: number; holdingCostPerDay: number };
+  /**
+   * When true, the snapshot modal's Start button calls onFinish directly,
+   * skipping Demo 1's Merchandising → SmartMatch → CGI pitch chain. Used by
+   * Demo 2 where the pitches are triggered from bucket clicks on the dashboard.
+   */
+  snapshotOnly?: boolean;
 }
 
 export function ScanningScreen({
   imsName = "Vincue",
   onFinish,
   benchmarks = { daysToFrontline: 50, holdingCostPerDay: 40 },
+  snapshotOnly = false,
 }: ScanningScreenProps = {}) {
   const statusMessages = buildStatusMessages(imsName);
   const [statusIdx, setStatusIdx] = useState(0);
@@ -414,7 +421,14 @@ export function ScanningScreen({
         noPhotos={90}
         rawPhotos={67}
         cgiPhotos={134}
-        onStart={() => advanceTo("merchandisingPitch")}
+        onStart={() => {
+          if (snapshotOnly) {
+            setStage("done");
+            onFinish?.();
+          } else {
+            advanceTo("merchandisingPitch");
+          }
+        }}
       />
 
       <MerchandisingPitchModal
