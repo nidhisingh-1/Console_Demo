@@ -13,6 +13,7 @@ import { BeforeAfterToggle, type DashboardView } from "./BeforeAfterToggle";
 import { SelectionActionBar } from "./SelectionActionBar";
 import { SmartCampaignModal } from "./SmartCampaignModal";
 import { PublishModal } from "./PublishModal";
+import { UpgradeModal } from "./UpgradeModal";
 import type { Row } from "./shared/VehicleRow";
 import { PLATFORMS } from "./publishPlatforms";
 import imgMerchandising from "../assets/merchandising-example.png";
@@ -380,8 +381,43 @@ const SYND_PLATFORMS = SYND_CHANNEL_IDS;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function Demo2() {
+export type Demo2Plan = "pro" | "lite";
+
+// Buckets gated behind the Pro plan when running Demo 2 in "lite" mode.
+const LITE_LOCKED_BUCKETS: Set<BucketKey> = new Set(["nophoto", "aging"]);
+
+const UPGRADE_COPY: Record<BucketKey, { feature: string; tagline: string; bullets: string[] } | null> = {
+  raw: null,
+  nophoto: {
+    feature: "SmartMatch",
+    tagline: "Publish vehicles before the photoshoot — match media from your existing inventory and go live on Day 0.",
+    bullets: [
+      "Spec-matched donor media (year, trim, color) per VIN",
+      "Eligibility surfaced before commit — AE controls timing",
+      "Median IMS → live time drops from 4 days to 4 minutes",
+    ],
+  },
+  cgi: null,
+  unsyndicated: null,
+  aging: {
+    feature: "Smart Campaigns",
+    tagline: "Targeted in-market campaigns for aged inventory bleeding holding cost — branded creatives, automated audiences.",
+    bullets: [
+      "Auto-segmented in-market shopper audiences",
+      "Campaign templates: price-drop, finance, trade-in",
+      "Average $52K/month in holding-cost recovered",
+    ],
+  },
+};
+
+interface Demo2Props {
+  /** "pro" (default) = full demo. "lite" = Demo 3 — SmartMatch & SmartCampaigns gated behind upgrade. */
+  plan?: Demo2Plan;
+}
+
+export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   const [scene, setScene] = useState<Scene>("connect");
+  const [upgradeBucket, setUpgradeBucket] = useState<BucketKey | null>(null);
   const [imsName, setImsName] = useState("Vincue");
   const [activeBucket, setActiveBucket] = useState<BucketKey | null>(null);
   const [pitchOpen, setPitchOpen] = useState(false);
@@ -457,9 +493,12 @@ export function Demo2() {
   }, []);
 
   // ─── Bucket click → filter + open pitch (no transformation yet) ──
+  // Opening the pitch also collapses the Need Actions FAB so the side panel
+  // has the visual focus.
   const handleBucketClick = useCallback((b: BucketKey) => {
     setActiveBucket((prev) => prev === b ? prev : b);
     setPitchOpen(true);
+    setFabExpanded(false);
   }, []);
 
   const handleClearBucket = useCallback(() => {
@@ -476,6 +515,14 @@ export function Demo2() {
   // ─── Run the actual transformation animation on the affected rows ──
   // Used by both the FAB's Transform button and (for aging) the Create-Campaign FAB.
   const runTransform = useCallback((bucket: BucketKey, options?: { platforms?: string[] }) => {
+    // Defense-in-depth: Lite plan absolutely cannot process gated buckets.
+    // No matter which UI path tries to invoke this — pitch CTA, SmartCampaign
+    // modal pick, syndication publish — a locked bucket diverts to the
+    // upgrade modal instead of running the transform.
+    if (plan === "lite" && LITE_LOCKED_BUCKETS.has(bucket)) {
+      setUpgradeBucket(bucket);
+      return;
+    }
     if (runningBucket || completed[bucket]) return;
     // Snapshot which vehicle IDs will be touched so the row shimmer targets them
     const targetIds = new Set(
@@ -504,6 +551,11 @@ export function Demo2() {
   // FAB, auto-select all aging vehicles, and surface the SelectionActionBar so
   // the AE can act on the cohort just like Demo 1's >40-day flow.
   const handleAgingPitchContinue = useCallback(() => {
+    // Lite plan: Smart Campaigns is gated. Route to the upgrade modal.
+    if (plan === "lite") {
+      setUpgradeBucket("aging");
+      return;
+    }
     setPitchOpen(false);
     setFabExpanded(false);
     const agingIds = new Set(
@@ -512,7 +564,7 @@ export function Demo2() {
     setSelectedVehicleIds(agingIds);
     setCampaignSelectionMode(true);
     setActiveBucket("aging"); // filter the list to aging too
-  }, [vehicles]);
+  }, [vehicles, plan]);
 
   const handleToggleSelect = useCallback((id: number) => {
     setSelectedVehicleIds((prev) => {
@@ -631,6 +683,13 @@ export function Demo2() {
 
       {pitchContent && (() => {
         const isSyndication = activeBucket === "unsyndicated";
+        // Demo 3 (lite) gates SmartMatch + SmartCampaigns. The pitch still
+        // shows in full, but the CTA becomes a gradient "Contact Sales" button
+        // that opens the UpgradeModal instead of running the transform.
+        const isLocked = plan === "lite"
+          && !!activeBucket
+          && LITE_LOCKED_BUCKETS.has(activeBucket)
+          && !completed[activeBucket];
 
         // ── Success banner data ──────────────────────────────────────────
         // When the active bucket has been resolved, compute the lift it gave —
@@ -645,10 +704,18 @@ export function Demo2() {
         // Resolve which CTA the pitch should currently show
         let label: string;
         let onAction: () => void;
-        if (isActiveCompleted) {
+        if (isLocked) {
+          // Lite plan: SmartMatch / SmartCampaigns are upsells.
+          label = "Upgrade to Pro · Contact Sales";
+          onAction = () => setUpgradeBucket(activeBucket!);
+        } else if (isActiveCompleted) {
           if (nextBucket) {
             label = `Move on to ${NEXT_BUCKET_LABELS[nextBucket]}`;
-            onAction = () => { setActiveBucket(nextBucket); setPitchOpen(true); };
+            onAction = () => {
+              setActiveBucket(nextBucket);
+              setPitchOpen(true);
+              setFabExpanded(false);
+            };
           } else {
             label = "Inventory is sale-ready — close";
             onAction = () => setPitchOpen(false);
@@ -679,6 +746,22 @@ export function Demo2() {
             {...pitchContent}
             success={successForActive}
             actionLabel={label}
+            locked={isLocked}
+          />
+        );
+      })()}
+
+      {/* Demo 3 (lite plan) — upgrade gate for SmartMatch / SmartCampaigns */}
+      {upgradeBucket && (() => {
+        const copy = UPGRADE_COPY[upgradeBucket];
+        if (!copy) return null;
+        return (
+          <UpgradeModal
+            open={!!upgradeBucket}
+            feature={copy.feature}
+            tagline={copy.tagline}
+            bullets={copy.bullets}
+            onClose={() => setUpgradeBucket(null)}
           />
         );
       })()}

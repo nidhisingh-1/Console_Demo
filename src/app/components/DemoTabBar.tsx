@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GripVertical } from "lucide-react";
 
-export type DemoTab = "demo1" | "demo2";
+export type DemoTab = "demo1" | "demo2" | "demo3";
 
 interface DemoTabBarProps {
   active: DemoTab;
@@ -44,7 +44,8 @@ export function DemoTabBar({ active, onChange }: DemoTabBarProps) {
 
   const tabs: { id: DemoTab; label: string }[] = [
     { id: "demo1", label: "Demo 1" },
-    { id: "demo2", label: "Demo 2" },
+    { id: "demo2", label: "Demo 2 · Pro" },
+    { id: "demo3", label: "Demo 3 · Lite" },
   ];
 
   // Clamp inside viewport on mount and on resize so it never escapes.

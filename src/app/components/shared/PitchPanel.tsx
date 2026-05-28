@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
-import { X, Check, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { X, Check, ArrowRight, Loader2, Sparkles, Lock } from "lucide-react";
 
 export interface PitchFeature {
   icon: React.ReactNode;
@@ -86,6 +86,8 @@ export interface PitchPanelProps extends PitchContent {
   channels?: PitchChannel[];
   selectedChannels?: Set<string>;
   onChannelToggle?: (id: string) => void;
+  /** Render the CTA as a magenta→purple gradient upgrade button (Demo 3 light plan). */
+  locked?: boolean;
 }
 
 const MAGENTA_GRAD = "linear-gradient(90deg, #FF5C9A 0%, #B651D7 100%)";
@@ -96,7 +98,7 @@ export function PitchPanel(props: PitchPanelProps) {
     accent, product, step, tagline, punchline, problem, bullets,
     proof, heroImage, comparison, features, actionLabel,
     channels, selectedChannels, onChannelToggle,
-    success,
+    success, locked,
   } = props;
   const panelRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
@@ -466,7 +468,13 @@ export function PitchPanel(props: PitchPanelProps) {
             type="button"
             onClick={onAction}
             disabled={actionRunning || completed}
-            className="w-full inline-flex items-center justify-center gap-[8px] h-[44px] rounded-[10px] text-[14px] font-semibold text-white font-['Inter:Semi_Bold',sans-serif] transition-opacity disabled:opacity-80 bg-[#4600F2] hover:bg-[#3a00d0]"
+            className={`w-full inline-flex items-center justify-center gap-[8px] h-[44px] rounded-[10px] text-[14px] font-semibold text-white font-['Inter:Semi_Bold',sans-serif] transition-opacity disabled:opacity-80 ${
+              locked ? "" : "bg-[#4600F2] hover:bg-[#3a00d0]"
+            }`}
+            style={locked ? {
+              background: "linear-gradient(90deg, #FF5C9A 0%, #B651D7 50%, #4600F2 100%)",
+              boxShadow: "0 8px 22px rgba(70,0,242,0.32)",
+            } : undefined}
           >
             {completed ? (
               <>
@@ -477,6 +485,12 @@ export function PitchPanel(props: PitchPanelProps) {
               <>
                 <Loader2 size={16} className="animate-spin" />
                 Running…
+              </>
+            ) : locked ? (
+              <>
+                <Lock size={14} strokeWidth={2.5} />
+                {actionLabel}
+                <ArrowRight size={16} />
               </>
             ) : (
               <>
