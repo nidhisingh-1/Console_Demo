@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GripVertical } from "lucide-react";
+import { MIcon } from "./shared/MIcon";
 
 export type DemoTab = "demo1" | "demo2" | "demo3";
 
@@ -120,7 +120,7 @@ export function DemoTabBar({ active, onChange }: DemoTabBarProps) {
         className="h-[28px] w-[20px] flex items-center justify-center text-black/35 hover:text-black/70 rounded-full"
         style={{ cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
       >
-        <GripVertical size={14} />
+        <MIcon name="drag_indicator" size={16} />
       </div>
       {tabs.map((tab) => {
         const isActive = tab.id === active;

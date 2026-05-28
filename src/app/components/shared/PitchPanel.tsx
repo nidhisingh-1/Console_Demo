@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { X, Check, ArrowRight, Loader2, Sparkles, Lock } from "lucide-react";
+import { StepMetricsPanel, type StepBucketKey } from "./StepMetricsPanel";
+import { DEFAULT_DEMO_CONFIG, type DemoConfig } from "../../types/demoConfig";
 
 export interface PitchFeature {
   icon: React.ReactNode;
@@ -23,12 +25,37 @@ export interface PitchContent {
   punchline?: string;
   /** The problem this pitch addresses (tied to the current bucket) */
   problem: string;
-  /** "How it works" bullets (max 3) */
+  /**
+   * When provided, renders the problem section as a chip/tag cloud instead of
+   * a paragraph. Each string becomes one pill tag.
+   */
+  problemChips?: string[];
+  /**
+   * When provided, renders a "The Solution" section with up to 3 icon-card boxes
+   * in a row between the problem section and "How it works".
+   */
+  solutionSection?: {
+    title?: string;
+    boxes: Array<{ icon: React.ReactNode; label: string; body: string }>;
+  };
+  /** "How it works" bullets (max 6) */
   bullets: string[];
-  /** ROI number + caption — proof.value animates in */
-  proof: { value: string; caption: string };
+  /**
+   * Controls the visual layout of the "How it works" section.
+   * - "checklist" (default) — checkmark bullets, paragraph text
+   * - "steps" — numbered vertical step list for short 3-4 word step names
+   * - "nodes" — horizontal connected-node timeline (max 4 nodes, no scroll)
+   */
+  bulletStyle?: "checklist" | "steps" | "nodes";
+  /** ROI number + caption — proof.value animates in. Omit to hide the section. */
+  proof?: { value: string; caption: string };
   /** Hero image (Demo 1 transformation artwork). */
   heroImage?: string;
+  /**
+   * Custom hero node — overrides heroImage when provided.
+   * Use for animated placeholders (scan GIF, etc.) instead of a static image.
+   */
+  heroNode?: React.ReactNode;
   /**
    * Side-by-side input → output comparison (uses Demo 1's raw/studio/cgi assets).
    * Each side is a ReactNode so the pitch can use an <img> or a "no media yet"
@@ -42,6 +69,11 @@ export interface PitchContent {
   };
   /** Feature cards (Demo 1 style — stagger in after the hero) */
   features?: PitchFeature[];
+  /**
+   * When to show feature cards. "pitch" = first drawer (default).
+   * "success" = second drawer after the primary CTA completes (e.g. SmartMatch).
+   */
+  featuresPhase?: "pitch" | "success";
   /** Primary CTA label (Process / Match / Syndicate / Launch campaign) */
   actionLabel: string;
 }
@@ -60,8 +92,20 @@ export interface PitchSuccess {
   dtfSaved: number;
   /** Inventory score gained this step (positive number) */
   scoreGained: number;
+  /** Inventory score before and after this step (0-10) */
+  scoreBefore?: number;
+  scoreAfter?: number;
   /** Holding-cost dollars recovered this step (positive number) */
   savedDollars: number;
+  /**
+   * Override the default 3 chips with product-specific metrics.
+   * When omitted, falls back to dtfSaved / scoreGained / savedDollars.
+   */
+  chips?: { delta: string; label: string }[];
+  /** Override the banner headline. Defaults to generic congratulations copy. */
+  title?: string;
+  /** Override the banner subtitle. */
+  subtitle?: string;
 }
 
 export interface PitchPanelProps extends PitchContent {
@@ -88,6 +132,15 @@ export interface PitchPanelProps extends PitchContent {
   onChannelToggle?: (id: string) => void;
   /** Render the CTA as a magenta→purple gradient upgrade button (Demo 3 light plan). */
   locked?: boolean;
+  /**
+   * Which bucket step this pitch represents. When set with the success state,
+   * renders the StepMetricsPanel (before/after bars + metric boxes).
+   */
+  metricsStep?: StepBucketKey;
+  /** Number of buckets completed before this pitch opened. */
+  completedSteps?: number;
+  /** Dealer inputs from the setup screen — drives personalised metrics. */
+  demoConfig?: DemoConfig;
 }
 
 const MAGENTA_GRAD = "linear-gradient(90deg, #FF5C9A 0%, #B651D7 100%)";
@@ -95,19 +148,28 @@ const MAGENTA_GRAD = "linear-gradient(90deg, #FF5C9A 0%, #B651D7 100%)";
 export function PitchPanel(props: PitchPanelProps) {
   const {
     open, onClose, onAction, actionRunning, completed,
-    accent, product, step, tagline, punchline, problem, bullets,
-    proof, heroImage, comparison, features, actionLabel,
+    accent, product, step, tagline, punchline, problem, problemChips, solutionSection, bullets, bulletStyle = "checklist",
+    proof, heroImage, heroNode, comparison: _comparison, features, featuresPhase = "pitch", actionLabel,
     channels, selectedChannels, onChannelToggle,
     success, locked,
+    metricsStep, completedSteps, demoConfig,
   } = props;
+  // _comparison is destructured but not rendered here — the new pitch UI uses heroNode for visual storytelling.
+  void _comparison;
+
+  const showFeatures = Boolean(
+    features?.length && (
+      (featuresPhase === "success" && success) ||
+      (featuresPhase !== "success" && !success)
+    )
+  );
   const panelRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
   const heroImgRef = useRef<HTMLImageElement>(null);
   const proofValueRef = useRef<HTMLSpanElement>(null);
 
   // Animate the proof value as a counter when it contains a leading number.
-  // (e.g. "+34% VDP views" → tweens 0 → 34 then renders the rest verbatim.)
-  const [parsedProof] = useState(() => parseLeadingNumber(proof.value));
+  const [parsedProof] = useState(() => parseLeadingNumber(proof?.value ?? ""));
 
   useEffect(() => {
     if (!open) return;
@@ -117,14 +179,12 @@ export function PitchPanel(props: PitchPanelProps) {
 
     const tl = gsap.timeline();
 
-    // 1. Slide the panel in from the right
     tl.fromTo(
       panel,
       { x: 80, opacity: 0 },
       { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }
     );
 
-    // 2. Hero image — fade + slight scale-up so it feels alive on mount (Demo 1 style)
     if (heroImgRef.current) {
       tl.fromTo(
         heroImgRef.current,
@@ -134,7 +194,6 @@ export function PitchPanel(props: PitchPanelProps) {
       );
     }
 
-    // 3. Each labelled section staggers in
     const items = sections.querySelectorAll<HTMLElement>("[data-section]");
     tl.fromTo(
       items,
@@ -143,7 +202,6 @@ export function PitchPanel(props: PitchPanelProps) {
       "-=0.35"
     );
 
-    // 4. Feature cards inside the features section get an extra inner stagger
     const featureCards = sections.querySelectorAll<HTMLElement>("[data-feature]");
     if (featureCards.length) {
       tl.fromTo(
@@ -154,7 +212,6 @@ export function PitchPanel(props: PitchPanelProps) {
       );
     }
 
-    // 5. Proof value count-up (only when a leading number was parsed)
     if (parsedProof.hasNumber && proofValueRef.current) {
       const el = proofValueRef.current;
       const target = parsedProof.value;
@@ -170,12 +227,11 @@ export function PitchPanel(props: PitchPanelProps) {
     }
 
     return () => { tl.kill(); };
-  }, [open, product, parsedProof]);
+  }, [open, product, parsedProof, success, featuresPhase]);
 
   if (!open) return null;
 
   return createPortal(
-    // No overlay — dashboard + vehicle rows remain fully visible behind the panel.
     <div
       ref={panelRef}
       className="fixed top-0 right-0 bottom-0 z-[70] w-[480px] bg-white border-l border-black/10 shadow-[-12px_0_28px_rgba(0,0,0,0.08)] flex flex-col"
@@ -226,57 +282,88 @@ export function PitchPanel(props: PitchPanelProps) {
 
         {/* Body */}
         <div ref={sectionsRef} className="flex-1 overflow-y-auto px-[28px] py-[20px]">
-          {/* Success banner — only when this bucket's transformation has landed.
-              Designed to "shout" — bold green gradient, large headline, big metric
-              tiles, and a sparkle accent so the AE has a clear celebration beat. */}
+          {/* Success state — compact header (no StepMetricsPanel in this project) */}
           {success && (
-            <div
-              data-section
-              className="relative mb-[24px] rounded-[18px] p-[20px] overflow-hidden"
-              style={{
-                background: "linear-gradient(135deg, #10B981 0%, #059669 55%, #047857 100%)",
-                boxShadow: "0 18px 40px rgba(16,185,129,0.35), inset 0 0 0 1px rgba(255,255,255,0.18)",
-              }}
-            >
-              {/* Decorative sparkle accents */}
-              <Sparkles
-                size={120}
-                className="absolute -top-[18px] -right-[10px] text-white/12"
-                strokeWidth={1.4}
-              />
-              <Sparkles
-                size={64}
-                className="absolute bottom-[8px] right-[60px] text-white/15"
-                strokeWidth={1.4}
-              />
+            <div data-section className="mb-[20px]">
+              <div
+                className="relative rounded-[14px] p-[18px] overflow-hidden mb-[16px]"
+                style={{
+                  background: "linear-gradient(135deg, #10B981 0%, #059669 55%, #047857 100%)",
+                  boxShadow: "0 12px 32px rgba(16,185,129,0.30), inset 0 0 0 1px rgba(255,255,255,0.15)",
+                }}
+              >
+                <Sparkles size={90} className="absolute -top-[12px] -right-[8px] text-white/10" strokeWidth={1.4} />
+                <div className="relative flex items-center justify-between gap-[16px]">
+                  <div className="flex items-center gap-[12px] min-w-0">
+                    <span className="size-[38px] rounded-full bg-white flex items-center justify-center text-[#059669] shrink-0 shadow-[0_4px_14px_rgba(0,0,0,0.18)]">
+                      <Check size={20} strokeWidth={3.2} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="inline-flex items-center gap-[5px] px-[7px] py-[1.5px] rounded-full bg-white/20 text-[9px] font-bold uppercase tracking-[1.2px] text-white mb-[6px] font-['Inter:Bold',sans-serif]">
+                        <Sparkles size={9} strokeWidth={2.6} />
+                        Impact unlocked
+                      </p>
+                      <h3 className="text-[16px] font-bold text-white font-['Inter:Bold',sans-serif] leading-[20px]">
+                        {success.title ?? "Transformation complete."}
+                      </h3>
+                    </div>
+                  </div>
 
-              <div className="relative flex items-center gap-[12px]">
-                <span className="size-[40px] rounded-full bg-white flex items-center justify-center text-[#059669] shrink-0 shadow-[0_6px_14px_rgba(0,0,0,0.18)]">
-                  <Check size={22} strokeWidth={3.2} />
-                </span>
-                <div className="min-w-0">
-                  <p className="inline-flex items-center gap-[6px] px-[8px] py-[2px] rounded-full bg-white/22 text-[9.5px] font-bold uppercase tracking-[1px] text-white font-['Inter:Bold',sans-serif]">
-                    <Sparkles size={10} strokeWidth={2.6} />
-                    Win achieved
-                  </p>
-                  <h3 className="mt-[6px] text-[20px] font-bold text-white font-['Inter:Bold',sans-serif] leading-[24px]">
-                    Congratulations — transformation complete!
-                  </h3>
-                  <p className="mt-[3px] text-[12.5px] text-white/85 font-['Inter:Regular',sans-serif] leading-[16px]">
-                    Here's the lift this step delivered on the dealership's KPIs.
-                  </p>
+                  <div className="shrink-0 text-right">
+                    <p className="text-[9px] font-bold uppercase tracking-[1.1px] text-white/75 font-['Inter:Bold',sans-serif]">
+                      Inventory score
+                    </p>
+                    <div className="mt-[4px] flex items-end justify-end gap-[6px] text-white">
+                      <ScoreOdometer
+                        before={success.scoreBefore}
+                        after={success.scoreAfter}
+                        delta={success.scoreGained}
+                      />
+                      <span className="text-[12px] font-semibold text-white/80 font-['Inter:Semi_Bold',sans-serif] pb-[2px]">
+                        /10
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="relative mt-[16px] grid grid-cols-3 gap-[8px]">
-                <SuccessChip label="Days to frontline" delta={`−${success.dtfSaved}d`} />
-                <SuccessChip label="Inventory score"   delta={`+${success.scoreGained.toFixed(1)}`} />
-                <SuccessChip label="Holding cost"      delta={`+$${success.savedDollars.toLocaleString()}`} />
-              </div>
+
+              {/* Before/After bars + metric boxes — drives the impact metrics
+                  shown after a successful transformation. Falls back to inline
+                  chips when no metricsStep is provided. */}
+              {metricsStep ? (
+                <StepMetricsPanel
+                  bucketKey={metricsStep}
+                  completedSteps={completedSteps ?? 0}
+                  demoConfig={demoConfig ?? DEFAULT_DEMO_CONFIG}
+                  accent={accent}
+                  successMode
+                />
+              ) : (
+                (success.chips ?? [
+                  { delta: `−${success.dtfSaved}d`, label: "Days to frontline" },
+                  { delta: `+${success.scoreGained.toFixed(1)}`, label: "Inventory score" },
+                  { delta: `+$${success.savedDollars.toLocaleString()}`, label: "Holding cost" },
+                ]).map((c, i) => (
+                  <div key={i} className="inline-block w-[calc(33.333%-6px)] mr-[8px] last:mr-0 rounded-[12px] bg-white px-[12px] py-[11px] shadow-[0_4px_10px_rgba(0,0,0,0.06)] border border-[rgba(16,185,129,0.20)] align-top">
+                    <p className="text-[20px] font-bold text-[#047857] font-['Inter:Bold',sans-serif] leading-none tracking-tight">
+                      {c.delta}
+                    </p>
+                    <p className="mt-[5px] text-[10px] font-bold uppercase tracking-[0.5px] text-black/55 font-['Inter:Bold',sans-serif] leading-tight">
+                      {c.label}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
-          {/* Hero artwork — Demo 1 transformation visual */}
-          {heroImage && (
+          {/* Hero artwork — animated node OR static image */}
+          {!success && heroNode && (
+            <div data-section className="mb-[20px]">
+              {heroNode}
+            </div>
+          )}
+          {!success && !heroNode && heroImage && (
             <div
               data-section
               className="mb-[20px] relative rounded-[14px] overflow-hidden border border-black/8 bg-[#FAFAFB]"
@@ -297,75 +384,140 @@ export function PitchPanel(props: PitchPanelProps) {
             </div>
           )}
 
-          {/* Input → Output comparison (uses Demo 1's raw/studio/cgi assets) */}
-          {comparison && (
-            <div data-section className="mb-[20px]">
-              <p className="text-[10px] font-bold uppercase tracking-[1.4px] text-black/40 mb-[10px] font-['Inter:Bold',sans-serif]">
-                Input → Output
+
+          {/* Problem */}
+          {!success && (
+            <div data-section className="mb-[18px]">
+              <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-black/45 mb-[10px] font-['Inter:Semi_Bold',sans-serif]">
+                The problem
               </p>
-              <div className="grid grid-cols-[1fr_18px_1fr] items-center gap-[6px]">
-                <div className="rounded-[10px] overflow-hidden border border-black/10 bg-[#F9FAFB]">
-                  <div className="px-[8px] py-[5px] bg-[#F3F4F6] border-b border-black/5">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.5px] text-black/55">
-                      {comparison.beforeLabel ?? "Input"}
+              {problemChips && problemChips.length > 0 ? (
+                <div className="flex flex-wrap gap-[6px]">
+                  {problemChips.map((chip, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center px-[10px] py-[5px] rounded-full text-[11.5px] font-medium font-['Inter:Medium',sans-serif] leading-none text-[#B91C1C] bg-[#FEE2E2] border border-[#FCA5A5]/60"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[13px] text-[#1F2937] leading-[1.55] font-['Inter:Regular',sans-serif]">
+                  {problem}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* The Solution — 3 icon-card boxes in a row */}
+          {!success && solutionSection && (
+            <div data-section className="mb-[20px]">
+              <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-black/45 mb-[10px] font-['Inter:Semi_Bold',sans-serif]">
+                {solutionSection.title ?? "The Solution"}
+              </p>
+              <div className="grid grid-cols-3 gap-[8px]">
+                {solutionSection.boxes.slice(0, 3).map((box, i) => (
+                  <div
+                    key={i}
+                    className="rounded-[12px] border border-black/8 bg-white flex flex-col gap-[6px] p-[12px]"
+                  >
+                    <span
+                      className="size-[28px] rounded-[8px] flex items-center justify-center shrink-0"
+                      style={{ background: `${accent}18`, color: accent }}
+                    >
+                      {box.icon}
+                    </span>
+                    <p className="text-[11.5px] font-semibold text-[#0a0a0a] font-['Inter:Semi_Bold',sans-serif] leading-[14px]">
+                      {box.label}
+                    </p>
+                    <p className="text-[10.5px] text-black/55 font-['Inter:Regular',sans-serif] leading-[14px]">
+                      {box.body}
                     </p>
                   </div>
-                  <div className="h-[110px] flex items-center justify-center bg-white overflow-hidden">
-                    {comparison.before}
-                  </div>
-                </div>
-                <ArrowRight size={16} className="mx-auto" style={{ color: accent }} strokeWidth={2.5} />
-                <div className="rounded-[10px] overflow-hidden border" style={{ borderColor: `${accent}55` }}>
-                  <div className="px-[8px] py-[5px] border-b" style={{ background: `${accent}10`, borderColor: `${accent}20` }}>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.5px]" style={{ color: accent }}>
-                      {comparison.afterLabel ?? "Output"}
-                    </p>
-                  </div>
-                  <div className="h-[110px] flex items-center justify-center bg-white overflow-hidden">
-                    {comparison.after}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Problem */}
-          <div data-section className="mb-[18px]">
-            <p className="text-[10px] font-bold uppercase tracking-[1.4px] text-black/40 mb-[6px] font-['Inter:Bold',sans-serif]">
-              The problem
-            </p>
-            <p className="text-[13px] text-[#1F2937] leading-[1.55] font-['Inter:Regular',sans-serif]">
-              {problem}
-            </p>
-          </div>
-
           {/* How it works */}
-          <div data-section className="mb-[20px]">
-            <p className="text-[10px] font-bold uppercase tracking-[1.4px] text-black/40 mb-[8px] font-['Inter:Bold',sans-serif]">
-              How it works
-            </p>
-            <ul className="space-y-[8px]">
-              {bullets.slice(0, 3).map((b, i) => (
-                <li key={i} className="flex items-start gap-[10px]">
-                  <span
-                    className="size-[18px] rounded-full flex items-center justify-center shrink-0 mt-[1px]"
-                    style={{ background: `${accent}1A`, color: accent }}
-                  >
-                    <Check size={11} strokeWidth={3} />
-                  </span>
-                  <span className="text-[13px] text-[#1F2937] leading-[1.5] font-['Inter:Medium',sans-serif] font-medium">
-                    {b}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Feature cards — Demo 1 grid style */}
-          {features && features.length > 0 && (
+          {!success && (
             <div data-section className="mb-[20px]">
+              <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-black/45 mb-[14px] font-['Inter:Semi_Bold',sans-serif]">
+                How it works
+              </p>
+              {bulletStyle === "nodes" ? (
+                <div className="relative flex items-start justify-between">
+                  <div
+                    className="absolute top-[13px] left-[14px] right-[14px] h-[2px]"
+                    style={{ background: `${accent}30` }}
+                    aria-hidden
+                  />
+                  {bullets.slice(0, 4).map((b, i) => (
+                    <div key={i} className="flex flex-col items-center gap-[10px] flex-1 relative z-[1]">
+                      <span
+                        className="size-[26px] rounded-full flex items-center justify-center text-[11px] font-bold font-['Inter:Bold',sans-serif] text-white shrink-0"
+                        style={{ background: accent }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="text-[10.5px] text-[#374151] text-center leading-[1.35] font-['Inter:Medium',sans-serif] font-medium px-[4px]">
+                        {b}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : bulletStyle === "steps" ? (
+                <ol className="relative">
+                  {bullets.map((b, i) => (
+                    <li key={i} className="flex items-start gap-[12px] pb-[14px] last:pb-0 relative">
+                      {i < bullets.length - 1 && (
+                        <span
+                          className="absolute left-[12px] top-[24px] bottom-0 w-[2px]"
+                          style={{ background: `${accent}30` }}
+                          aria-hidden
+                        />
+                      )}
+                      <span
+                        className="size-[24px] rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold font-['Inter:Bold',sans-serif] text-white z-[1]"
+                        style={{ background: accent }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="text-[13px] text-[#1F2937] leading-[1.5] font-['Inter:Medium',sans-serif] font-medium pt-[3px]">
+                        {b}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <ul className="space-y-[10px]">
+                  {bullets.slice(0, 3).map((b, i) => (
+                    <li key={i} className="flex items-start gap-[10px]">
+                      <span
+                        className="size-[18px] rounded-full flex items-center justify-center shrink-0 mt-[1px]"
+                        style={{ background: `${accent}1A`, color: accent }}
+                      >
+                        <Check size={11} strokeWidth={3} />
+                      </span>
+                      <span className="text-[13px] text-[#1F2937] leading-[1.5] font-['Inter:Medium',sans-serif] font-medium">
+                        {b}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Feature cards */}
+          {showFeatures && features && (
+            <div
+              data-section
+              className={`mb-[20px]${success && featuresPhase === "success" ? " mt-[32px]" : ""}`}
+            >
               <p className="text-[10px] font-bold uppercase tracking-[1.4px] text-black/40 mb-[10px] font-['Inter:Bold',sans-serif]">
-                What you get
+                {success && featuresPhase === "success" ? "What you got" : "What you get"}
               </p>
               <div className="grid grid-cols-3 gap-[8px]">
                 {features.slice(0, 3).map((f, i) => (
@@ -392,9 +544,8 @@ export function PitchPanel(props: PitchPanelProps) {
             </div>
           )}
 
-          {/* Inline channel picker — used by the syndication pitch so the AE
-              picks publishing channels without leaving the side panel. */}
-          {channels && selectedChannels && onChannelToggle && (
+          {/* Inline channel picker */}
+          {!success && channels && selectedChannels && onChannelToggle && (
             <div data-section className="mb-[20px]">
               <p className="text-[10px] font-bold uppercase tracking-[1.4px] text-black/40 mb-[8px] font-['Inter:Bold',sans-serif]">
                 Where do you want to publish?
@@ -440,26 +591,31 @@ export function PitchPanel(props: PitchPanelProps) {
           )}
 
           {/* Proof / ROI */}
-          <div
-            data-section
-            className="rounded-[12px] p-[16px] border"
-            style={{ background: `${accent}08`, borderColor: `${accent}25` }}
-          >
-            <p className="text-[10px] font-bold uppercase tracking-[1.4px] text-black/40 mb-[4px] font-['Inter:Bold',sans-serif]">
-              Proven impact
-            </p>
-            <p
-              className="text-[28px] font-bold font-['Inter:Bold',sans-serif] leading-none"
-              style={{ color: accent }}
+          {!success && proof && (
+            <div
+              data-section
+              className="rounded-[12px] p-[16px] border"
+              style={{ background: `${accent}08`, borderColor: `${accent}25` }}
             >
-              <span ref={proofValueRef}>
-                {parsedProof.hasNumber ? formatProof(parsedProof, 0) : proof.value}
-              </span>
-            </p>
-            <p className="mt-[6px] text-[12px] text-[#374151] font-['Inter:Regular',sans-serif] leading-snug">
-              {proof.caption}
-            </p>
-          </div>
+              <p
+                className="text-[10px] font-bold uppercase tracking-[1.2px] mb-[4px] font-['Inter:Bold',sans-serif]"
+                style={{ color: accent }}
+              >
+                Proven impact
+              </p>
+              <p
+                className="text-[28px] font-bold font-['Inter:Bold',sans-serif] leading-none"
+                style={{ color: accent }}
+              >
+                <span ref={proofValueRef}>
+                  {parsedProof.hasNumber ? formatProof(parsedProof, 0) : proof.value}
+                </span>
+              </p>
+              <p className="mt-[6px] text-[12px] text-black/60 font-['Inter:Regular',sans-serif] leading-snug">
+                {proof.caption}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Sticky footer CTA */}
@@ -505,9 +661,115 @@ export function PitchPanel(props: PitchPanelProps) {
   );
 }
 
-// ─── Proof value parser ─────────────────────────────────────────────────────
-// We accept proof strings like "+34% VDP views", "0 → live in 4 min", "$52K saved",
-// pull the first numeric token, and tween it from 0 → target during entrance.
+// ── Success banner inventory-score odometer (rolling digits) ──────────────────
+function ScoreOdometer({ before, after, delta }: { before?: number; after?: number; delta?: number }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const tensRef = useRef<HTMLDivElement>(null);
+  const onesRef = useRef<HTMLDivElement>(null);
+  const decRef  = useRef<HTMLDivElement>(null);
+
+  const safeBefore = Number.isFinite(before) ? (before as number) : 0;
+  const safeAfter  = Number.isFinite(after)  ? (after as number)  : safeBefore;
+
+  // Inventory score is 0-10 on a one-decimal scale. Pad to "XY.Z" so values
+  // like 5.3 parse as tens=0, ones=5, dec=3 (avoids the NaN/"30.0" bug from
+  // padding to 3 chars where the "." landed in the tens slot).
+  const fmt = (n: number) => n.toFixed(1).padStart(4, "0");
+  const b = fmt(safeBefore);
+  const a = fmt(safeAfter);
+
+  const bT = parseInt(b[0], 10);
+  const bO = parseInt(b[1], 10);
+  const bD = parseInt(b[3], 10);
+
+  const aT = parseInt(a[0], 10);
+  const aO = parseInt(a[1], 10);
+  const aD = parseInt(a[3], 10);
+
+  // Hide the tens digit when both values stay below 10 — otherwise scores
+  // would render as "06.4". Show it only when either side hits 10+ (i.e. 10.0).
+  const showTens = bT > 0 || aT > 0;
+
+  useEffect(() => {
+    if (!wrapRef.current) return;
+    const H = 28;
+
+    const roll = (ref: React.RefObject<HTMLDivElement>, from: number, to: number, delay: number) => {
+      if (!ref.current) return null;
+      const cycles = 2;
+      const steps = cycles * 10 + ((to - from + 10) % 10);
+      gsap.set(ref.current, { y: -from * H });
+      return gsap.to(ref.current, {
+        y: -(from + steps) * H,
+        duration: 0.9,
+        delay,
+        ease: "power3.out",
+        modifiers: {
+          y: (y) => {
+            const val = parseFloat(y);
+            const wrapped = ((val % (10 * H)) + (10 * H)) % (10 * H);
+            return `${-wrapped}px`;
+          },
+        },
+      });
+    };
+
+    const t1 = roll(tensRef, bT, aT, 0.25);
+    const t2 = roll(onesRef, bO, aO, 0.28);
+    const t3 = roll(decRef,  bD, aD, 0.31);
+
+    return () => {
+      t1?.kill();
+      t2?.kill();
+      t3?.kill();
+    };
+  }, [bT, bO, bD, aT, aO, aD]);
+
+  const DigitStack = ({ innerRef }: { innerRef: React.RefObject<HTMLDivElement> }) => (
+    <div className="h-[28px] overflow-hidden">
+      <div ref={innerRef}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-[28px] leading-[28px] text-[28px] font-bold tabular-nums font-['Inter:Bold',sans-serif]"
+          >
+            {i}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex items-end justify-end gap-[10px] text-white">
+      <div ref={wrapRef} className="relative flex items-end">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-[2px] -top-[2px] h-[10px]"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.00) 100%)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-[2px] -bottom-[2px] h-[10px]"
+          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.00) 100%)" }}
+        />
+        {showTens && <DigitStack innerRef={tensRef} />}
+        <DigitStack innerRef={onesRef} />
+        <div className="h-[28px] leading-[28px] text-[28px] font-bold font-['Inter:Bold',sans-serif]">
+          .
+        </div>
+        <DigitStack innerRef={decRef} />
+      </div>
+
+      {typeof delta === "number" && (
+        <span className="pb-[3px] text-[12px] font-semibold text-white/85 font-['Inter:Semi_Bold',sans-serif] tabular-nums">
+          +{delta.toFixed(1)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 interface ParsedProof {
   hasNumber: boolean;
   prefix: string;
@@ -534,24 +796,10 @@ function parseLeadingNumber(text: string): ParsedProof {
   };
 }
 
-function SuccessChip({ label, delta }: { label: string; delta: string }) {
-  return (
-    <div className="rounded-[12px] bg-white px-[12px] py-[11px] shadow-[0_4px_10px_rgba(0,0,0,0.10)]">
-      <p className="text-[22px] font-bold text-[#047857] font-['Inter:Bold',sans-serif] leading-none tracking-tight">
-        {delta}
-      </p>
-      <p className="mt-[5px] text-[10px] font-bold uppercase tracking-[0.5px] text-black/55 font-['Inter:Bold',sans-serif] leading-tight">
-        {label}
-      </p>
-    </div>
-  );
-}
-
 function formatProof(parsed: ParsedProof, current: number): string {
   if (!parsed.hasNumber) return parsed.fullText;
   const sign = parsed.value < 0 ? "-" : (parsed.prefix.includes("+") ? "+" : "");
   const num = Math.abs(current).toFixed(parsed.decimals);
-  // Strip leading sign characters from prefix so we don't double-print them
   const cleanPrefix = parsed.prefix.replace(/[+-]$/, "");
   return `${cleanPrefix}${sign}${num}${parsed.suffix}`;
 }

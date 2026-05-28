@@ -1,12 +1,17 @@
 import { useCallback, useMemo, useState } from "react";
 import {
-  Image as ImageIcon, RotateCw, Film, Rocket, Calendar, Search,
-  Send, Layers, Globe, Sparkles, Timer, Building2, Wand2,
+  Monitor, Palette, Smartphone, Search, Rocket, Building2,
+  Layers, Globe, Sparkles, Wand2, Send, Timer, Calendar,
 } from "lucide-react";
+import {
+  RawScanHero, SmartMatchScanHero, StockPhotoGridHero,
+  SyndicationHero, SmartCampaignsHero,
+} from "./shared/PitchHeroes";
 import { IMSImportScreen } from "./IMSImportScreen";
 import { ScanningScreen } from "./ScanningScreen";
 import { LoadingScreen } from "./LoadingScreen";
-import { Demo2Dashboard, type BucketKey, type BucketState } from "./Demo2Dashboard";
+import Frame31 from "../../imports/Frame2147240606/Frame2147240606";
+import { Demo2Dashboard, type BucketKey, type BucketState, type FilterKey } from "./Demo2Dashboard";
 import { PitchPanel, type PitchContent } from "./shared/PitchPanel";
 import { InventoryDiagnosticFab } from "./InventoryDiagnosticFab";
 import { BeforeAfterToggle, type DashboardView } from "./BeforeAfterToggle";
@@ -16,162 +21,204 @@ import { PublishModal } from "./PublishModal";
 import { UpgradeModal } from "./UpgradeModal";
 import type { Row } from "./shared/VehicleRow";
 import { PLATFORMS } from "./publishPlatforms";
-import imgMerchandising from "../assets/merchandising-example.png";
-import imgSmartMatch from "../assets/smart-match-example.png";
-import imgCampaigns from "../assets/smart-campaigns-example.png";
-import imgRawExterior from "../assets/vehicle/raw-exterior-1.jpg";
-import imgStudioExterior from "../assets/vehicle/studio-exterior-1.jpg";
-import imgCgiFront from "../assets/vehicle/cgi-front.jpg";
-import imgCgiTransformed from "../assets/vehicle/cgi-transformed-front.jpg";
-import { ImageOff } from "lucide-react";
+// Hero images are now baked into PitchHeroes — Demo2 no longer needs the raw imports here.
 
 // ─── Pitch content — uses Demo 1's hero artwork and feature card structure so
 //     the Demo 2 side panel feels like an extension of the Demo 1 transformation
 //     journey (same imagery, same product story).
 const PITCHES: Record<BucketKey, PitchContent> = {
   raw: {
-    accent: "#F59E0B",
-    step: "Step 01 · Smart Suite · Merchandising",
-    product: "Studio AI.",
-    punchline: "Studio media, without the studio.",
-    tagline: "Smartphone in, brand-perfect media out — in minutes.",
+    accent: "#E91E63",
+    step: "Step 01 · Studio AI · Smart Shoot",
+    product: "Smart Shoot",
+    punchline: "Cut re shoots and editing time",
+    tagline: "Turn lot photos into marketplace ready media",
     problem:
-      "89 vehicles have raw photos sitting in the IMS — parking-lot backgrounds, mixed lighting, no 360. They're listable, but they don't convert.",
-    bullets: [
-      "Studio backgrounds applied to existing photos with 1-click",
-      "360° spin + dealership-branded video tour auto-generated",
-      "Shadow, plate-blur, and color-correct baked into every output",
+      "Raw lot photos have mixed backgrounds, patchy lighting, and no 360 or video. Buyers scroll past listings that look like they were shot in a hurry.",
+    problemChips: [
+      "Mixed Backgrounds",
+      "Patchy Lighting",
+      "Non-interactive VDPs",
+      "Low CTRs",
+      "High TTM",
+      "Photography Costs",
+      "Holding Cost",
+      "No 360 / Video",
+      "Inconsistent Branding",
     ],
-    proof: { value: "+34% VDP views", caption: "Average lift on listings upgraded with Spyne studio backgrounds vs. raw lot photos." },
-    heroImage: imgMerchandising,
-    comparison: {
-      beforeLabel: "Raw lot photo",
-      afterLabel: "Studio output",
-      before: <img src={imgRawExterior} alt="Raw lot photo" className="w-full h-full object-cover" />,
-      after:  <img src={imgStudioExterior} alt="Studio output" className="w-full h-full object-cover" />,
+    solutionSection: {
+      title: "The Solution: Smart Shoot",
+      boxes: [
+        { icon: <Monitor size={14} strokeWidth={2} />,    label: "Interactive VDPs",            body: "Studio images, car tours and video tours from your smartphone." },
+        { icon: <Palette size={14} strokeWidth={2} />,    label: "Dealership Branding",         body: "Wide range of studio backgrounds and dealership branding." },
+        { icon: <Smartphone size={14} strokeWidth={2} />, label: "Studio Grade Without Agencies", body: "Shoot with minimal training on a phone or import from IMS." },
+      ],
     },
-    features: [
-      { icon: <ImageIcon size={16} strokeWidth={2.2} />, title: "Studio Images",  tagline: "Auto-enhanced, background-removed.", accent: "#3B82F6" },
-      { icon: <RotateCw size={16} strokeWidth={2.2} />,  title: "360° Car Tours", tagline: "Stitched and ready in one shoot.",  accent: "#10B981" },
-      { icon: <Film size={16} strokeWidth={2.2} />,      title: "Feature Videos", tagline: "Branded clips, made automatically.", accent: "#F59E0B" },
+    bullets: [
+      "Shoot with Studio App",
+      "Choose background",
+      "Hit Create Listing",
+      "Studio grade assets ready",
     ],
+    bulletStyle: "nodes",
+    heroNode: <RawScanHero />,
     actionLabel: "Process all 89",
   },
   nophoto: {
     accent: "#7F6AF2",
-    step: "Step 02 · Smart Suite · Acquisition",
-    product: "SmartMatch.",
-    punchline: "Go live on Day 0.",
-    tagline: "Publish before the vehicle even arrives.",
+    step: "Step 02 · Studio AI · Smart Match",
+    product: "SmartMatch",
+    punchline: "Capture demand from Day 0",
+    tagline: "Be visible while competitors wait for the shoot",
     problem:
-      "23 vehicles have no media yet. They're projected as eligible for SmartMatch — same year, trim, and spec as parent inventory we already have media for.",
-    bullets: [
-      "Eligibility computed from VIN spec, trim, color match, and year",
-      "Projected matches surfaced before commit — AE controls when to apply",
-      "Parent media adapted per-vehicle so listings don't look duplicated",
+      "The vehicle is acquired but the shoot is pending or it has not hit your lot yet. Every day your listing sits dark, buyers are clicking the competition while holding cost eats at your margin.",
+    problemChips: [
+      "Dark Listings, Zero Leads",
+      "3-5 Days to Go Live",
+      "Shoot Scheduling Delays",
+      "Repeat Reshoots",
+      "Photography Costs",
+      "Holding Cost",
+      "High Time to Live",
     ],
-    proof: { value: "0 → live in 4 min", caption: "Median time from IMS arrival to first published listing for SmartMatch-eligible vehicles." },
-    heroImage: imgSmartMatch,
-    comparison: {
-      beforeLabel: "No photo yet",
-      afterLabel: "Matched media",
-      before: (
-        <div className="w-full h-full bg-[#F3F4F6] flex flex-col items-center justify-center gap-[6px] text-[#9CA3AF]">
-          <ImageOff size={28} strokeWidth={1.8} />
-          <span className="text-[10px] font-semibold text-black/40 uppercase tracking-[0.5px]">Awaiting media</span>
-        </div>
-      ),
-      after: <img src={imgStudioExterior} alt="Matched studio media" className="w-full h-full object-cover" />,
+    solutionSection: {
+      title: "The Solution: Smart Match",
+      boxes: [
+        { icon: <Search size={14} strokeWidth={2} />,    label: "Smart VIN Matching",          body: "Matched on year, make, model, trim and color. Cloned automatically." },
+        { icon: <Rocket size={14} strokeWidth={2} />,    label: "Go Live Instantly",           body: "Published in seconds. Capture demand from Day 0." },
+        { icon: <Building2 size={14} strokeWidth={2} />, label: "Reuse Assets Across Rooftops", body: "Shot once, live-ready across every dealership in your group." },
+      ],
     },
-    features: [
-      { icon: <Rocket size={16} strokeWidth={2.2} />,   title: "Live Instantly",  tagline: "Skip the shoot. Publish in seconds.", accent: "#4600F2" },
-      { icon: <Calendar size={16} strokeWidth={2.2} />, title: "List Pre-Arrival", tagline: "Live days before the car lands.",   accent: "#10B981" },
-      { icon: <Search size={16} strokeWidth={2.2} />,   title: "Spec Matching",   tagline: "Year, make, model, trim, colour.",   accent: "#E91E63" },
+    bullets: [
+      "New car acquired",
+      "Enter VIN or import from IMS",
+      "Matching VIN found",
+      "Go live with studio grade assets",
     ],
+    bulletStyle: "nodes",
+    heroNode: <SmartMatchScanHero />,
+    features: [
+      { icon: <Rocket size={16} strokeWidth={2.2} />,   title: "Live Instantly",   tagline: "Skip the shoot. Publish in seconds.", accent: "#4600F2" },
+      { icon: <Calendar size={16} strokeWidth={2.2} />, title: "List Pre-Arrival", tagline: "Live days before the car lands.",     accent: "#10B981" },
+      { icon: <Search size={16} strokeWidth={2.2} />,   title: "Spec Matching",    tagline: "Year, make, model, trim, color.",     accent: "#E91E63" },
+    ],
+    featuresPhase: "success",
     actionLabel: "Match all eligible",
   },
   cgi: {
     accent: "#7C3AED",
-    step: "Step 03 · Smart Suite · CGI",
-    product: "CGI Studio.",
-    punchline: "Photorealistic showroom renders.",
-    tagline: "Elevate standard processed photos to CGI-grade renders without a reshoot.",
+    step: "Step 03 · Studio AI · Stock Photos",
+    product: "Smart Shoot",
+    punchline: "Make your VDPs look premium",
+    tagline: "Studio grade imagery at inventory scale",
     problem:
-      "134 vehicles have clean processed photos, but the lighting, angles, and backgrounds aren't premium enough to stand out on third-party marketplaces or high-intent OEM placements.",
-    bullets: [
-      "Vehicle re-lit, rotated, and re-staged in a virtual studio per VIN",
-      "Brand backgrounds & color accents matched to your dealership",
-      "Multi-angle CGI set — front 3/4, rear 3/4, interior dash — generated together",
+      "Stock images on your VDPs are hurting your dealership brand. Inconsistent backgrounds, watermarks, and non-standard crops across listings reduce buyer trust and suppress VDP clicks.",
+    problemChips: [
+      "Inconsistent VDPs",
+      "Watermarked Images",
+      "Off-Brand Visuals",
+      "Reduced Buyer Trust",
+      "Low Marketplace CTR",
+      "Non-Standard Crops",
+      "Perceived Unreliability",
     ],
-    proof: { value: "+58% engagement", caption: "Median CTR lift on listings with CGI-grade hero images vs. standard processed photos across third-party marketplaces." },
-    heroImage: imgCampaigns,
-    comparison: {
-      beforeLabel: "Standard processed",
-      afterLabel: "CGI-grade render",
-      before: <img src={imgCgiFront} alt="Standard processed front" className="w-full h-full object-cover" />,
-      after:  <img src={imgCgiTransformed} alt="CGI-grade front" className="w-full h-full object-cover" />,
+    solutionSection: {
+      title: "The Solution: Studio AI",
+      boxes: [
+        { icon: <Layers size={14} strokeWidth={2} />,   label: "Consistent VDPs",       body: "Uniform angles, clean backgrounds and studio grade on every VDP." },
+        { icon: <Globe size={14} strokeWidth={2} />,    label: "Increased Competitiveness", body: "Beat stock photos on every marketplace and drive higher VDP clicks." },
+        { icon: <Sparkles size={14} strokeWidth={2} />, label: "Higher Buyer Trust",    body: "Consistent imagery builds credibility and keeps buyers engaged." },
+      ],
     },
-    features: [
-      { icon: <Wand2 size={16} strokeWidth={2.2} />,     title: "Virtual Studio", tagline: "Showroom lighting, no studio space.", accent: "#7C3AED" },
-      { icon: <ImageIcon size={16} strokeWidth={2.2} />, title: "Brand Match",    tagline: "Backgrounds + color tuned to lot.",   accent: "#3B82F6" },
-      { icon: <RotateCw size={16} strokeWidth={2.2} />,  title: "Multi-Angle",    tagline: "Hero, rear 3/4, interior — together.", accent: "#10B981" },
+    bullets: [
+      "Import inventory",
+      "Smart Match or Smart Shoot",
+      "Studio grade assets ready",
+      "Push live to all platforms",
     ],
+    bulletStyle: "nodes",
+    heroNode: <StockPhotoGridHero />,
     actionLabel: "Upgrade all 134 to CGI",
   },
   unsyndicated: {
     accent: "#4600F2",
-    step: "Step 03 · Smart Suite · Distribution",
-    product: "Syndication.",
+    step: "Step 04 · Studio AI · Syndication",
+    product: "Syndication",
     punchline: "Every channel, one click.",
-    tagline: "Push every complete listing to the marketplaces that matter.",
+    tagline: "Push every studio-grade listing to the marketplaces buyers actually use, instantly.",
     problem:
-      "156 vehicles are camera-ready but only live on your dealer site. Marketplaces, social, and OEM partners haven't seen them — that's frontline time you're paying for.",
+      "Your vehicles are listing-ready but visibility stops at your website. Buyers searching AutoTrader, Cars.com, and KBB never see them. Every day a car sits off-marketplace is another day holding cost compounds with zero buyer reach.",
+    problemChips: [
+      "Zero Off-Site Visibility",
+      "Manual Publishing",
+      "Platform Reformatting",
+      "Slow Time to Live",
+      "No Publish Confirmation",
+      "Duplicate Listing Risk",
+      "IMS Sync Delays",
+    ],
+    solutionSection: {
+      title: "The Solution: Syndication",
+      boxes: [
+        { icon: <Globe size={14} strokeWidth={2} />, label: "Instant Multi-Platform Reach", body: "AutoTrader, Cars.com, KBB, Facebook and Instagram in one action." },
+        { icon: <Wand2 size={14} strokeWidth={2} />, label: "Marketplace-Specific Formatting", body: "Aspect ratios, specs and character limits matched per platform." },
+        { icon: <Send size={14} strokeWidth={2} />,  label: "Safe Publish Tracking",       body: "Confirms each listing published safely. Status synced to IMS." },
+      ],
+    },
     bullets: [
-      "AutoTrader, Cars.com, KBB, dealer site, Facebook & Instagram in one push",
-      "Channel-specific formatting (aspect ratios, character limits) handled per-platform",
-      "Status pinged back to the IMS so the AE never re-publishes by accident",
+      "Select listings to syndicate",
+      "Pick your marketplaces",
+      "One-click publish",
+      "Track listing health",
     ],
-    proof: { value: "11 channels", caption: "Average syndication reach per vehicle after first publish. Marketplaces alone drive ~62% of inbound leads." },
-    // No Demo 1 image for syndication — use the campaign hero as the cleanest stand-in
-    heroImage: imgCampaigns,
-    features: [
-      { icon: <Globe size={16} strokeWidth={2.2} />, title: "Marketplaces",      tagline: "AutoTrader, Cars.com, KBB live.", accent: "#4600F2" },
-      { icon: <Send size={16} strokeWidth={2.2} />,  title: "Channel-Aware",     tagline: "Per-platform crops & captions.",   accent: "#0EA5E9" },
-      { icon: <Layers size={16} strokeWidth={2.2} />, title: "IMS Sync",         tagline: "Status pings back automatically.", accent: "#10B981" },
-    ],
+    bulletStyle: "nodes",
+    heroNode: <SyndicationHero />,
     actionLabel: "Syndicate all 156",
   },
   aging: {
     accent: "#DC2626",
-    step: "Step 04 · Smart Suite · Performance",
-    product: "Smart Campaigns.",
-    punchline: "Win the attention battle.",
-    tagline: "Targeted campaigns for aged inventory bleeding holding cost.",
+    step: "Step 05 · Studio AI · Smart Campaigns",
+    product: "Smart Campaigns",
+    punchline: "Right offer. Right car. Right time.",
+    tagline: "Run visual promotions across your entire inventory automatically. No briefing cycle, no manual updates.",
     problem:
-      "34 units are past 40 days on lot at $45/day holding cost — that's $1,530+ per car per month evaporating. Generic ads aren't moving them; targeted campaigns can.",
-    bullets: [
-      "Auto-segmented audiences from in-market shopper data",
-      "Campaign template library — price-drop, finance-led, trade-in pitches",
-      "Holding-cost math attached to every campaign so the AE proves the ROI",
+      "Dealership campaigns are fragmented, manual, and easy to miss. Promotions expire unnoticed, aged inventory looks identical to fresh arrivals, and every deal becomes a price negotiation when your value goes unseen.",
+    problemChips: [
+      "Promotions Expire Unnoticed",
+      "Aged Inventory Invisible",
+      "Manual Campaign Setup",
+      "Inconsistent Brand Presence",
+      "Competing on Price Alone",
+      "Value Goes Unseen",
+      "Missed Seasonal Timing",
     ],
-    proof: { value: "$52K saved", caption: "Average monthly holding-cost reduction across dealers running Smart Campaigns on >40-day inventory." },
-    heroImage: imgCampaigns,
-    comparison: {
-      beforeLabel: "Standard listing",
-      afterLabel: "Campaign-grade",
-      before: <img src={imgCgiFront} alt="Standard CGI image" className="w-full h-full object-cover" />,
-      after:  <img src={imgCgiTransformed} alt="Campaign-grade CGI" className="w-full h-full object-cover" />,
+    solutionSection: {
+      title: "The Solution: Smart Campaigns",
+      boxes: [
+        { icon: <Sparkles size={14} strokeWidth={2} />,  label: "Automated Visual Promotions", body: "Overlays, billboards and dynamic text applied across your inventory automatically." },
+        { icon: <Timer size={14} strokeWidth={2} />,     label: "Aged Inventory Targeting",    body: "Listings past 30 days get a visual urgency push automatically." },
+        { icon: <Building2 size={14} strokeWidth={2} />, label: "Multi-Rooftop Campaigns",     body: "One campaign across all locations. Every listing stays on-brand." },
+      ],
     },
+    bullets: [
+      "Set up your creatives",
+      "Build campaign rules",
+      "Preview per VIN",
+      "Launch and run automatically",
+    ],
+    bulletStyle: "nodes",
+    heroNode: <SmartCampaignsHero />,
     features: [
       { icon: <Sparkles size={16} strokeWidth={2.2} />,  title: "Targeted Audiences", tagline: "In-market shoppers, auto-segmented.", accent: "#DC2626" },
-      { icon: <Timer size={16} strokeWidth={2.2} />,     title: "Holding-Cost ROI",   tagline: "$/day math attached to every run.", accent: "#F59E0B" },
+      { icon: <Timer size={16} strokeWidth={2.2} />,     title: "Holding-Cost ROI",   tagline: "$/day math on every campaign run.",  accent: "#F59E0B" },
       { icon: <Building2 size={16} strokeWidth={2.2} />, title: "Group-Wide",         tagline: "Roll the same campaign across lots.", accent: "#4600F2" },
     ],
+    featuresPhase: "success",
     actionLabel: "Launch campaigns",
   },
 };
 
-type Scene = "connect" | "loading" | "scanning" | "dashboard";
+type Scene = "connect" | "loading" | "synced" | "scanning" | "dashboard";
 
 interface VehicleState extends Row {
   initialBuckets: BucketKey[];
@@ -188,9 +235,15 @@ interface VehicleState extends Row {
 const DTF_BY_STEP   = [14,  12,  10,  8,    6,    5];
 // Inventory Score is on a 0-10 scale (rendered as a half-donut gauge)
 const SCORE_BY_STEP = [4.2, 5.3, 6.4, 7.5,  8.4,  9.1];
-// Cumulative holding-cost savings unlocked as each bucket resolves. Numbers
-// roughly correspond to (DTF days saved × hold-cost $/day × inventory volume).
-const SAVED_BY_STEP = [0,   4_300, 8_900, 15_200, 24_600, 42_500];
+// Total holding cost still accruing each step — starts at the dealership's
+// baseline exposure and drops as each bucket is resolved. Decrease = good.
+const HOLDING_COST_BY_STEP = [52_500, 48_200, 43_600, 37_300, 27_900, 10_000];
+
+// Per-step drop in holding cost (used by the success banner's "+$N saved" chip).
+function holdingCostSavedAtStep(step: number): number {
+  if (step <= 0 || step >= HOLDING_COST_BY_STEP.length) return 0;
+  return HOLDING_COST_BY_STEP[step - 1] - HOLDING_COST_BY_STEP[step];
+}
 
 const BUCKET_TOTALS: Record<BucketKey, number> = {
   raw: 89,
@@ -357,12 +410,30 @@ function ageToDate(daysAgo: number): string {
 const BUCKET_ORDER: BucketKey[] = ["raw", "nophoto", "cgi", "unsyndicated", "aging"];
 
 const NEXT_BUCKET_LABELS: Record<BucketKey, string> = {
-  raw:          "transform raw photos to studio output",
-  nophoto:      "fix no photos with Smart Match",
-  cgi:          "upgrade standard photos to CGI-grade renders",
-  unsyndicated: "syndicate listings to all channels",
-  aging:        "run Smart Campaigns on aged inventory",
+  raw:          "Smart Shoot",
+  nophoto:      "Smart Match",
+  cgi:          "CGI Upgrade",
+  unsyndicated: "Syndication",
+  aging:        "Smart Campaigns",
 };
+
+// Headline copy for the success banner per bucket — referenced by successForActive.
+function successTitle(b: BucketKey): string {
+  switch (b) {
+    case "raw":          return "89 raw listings, now studio grade.";
+    case "nophoto":      return "23 dark listings, now SmartMatched.";
+    case "cgi":          return "134 stock photos, upgraded to CGI.";
+    case "unsyndicated": return "156 listings, now live on every channel.";
+    case "aging":        return "34 aged units, now in active campaigns.";
+  }
+}
+
+// Does a vehicle match a given filter key (bucket cohort or age threshold)?
+function matchesFilter(v: VehicleState, f: FilterKey): boolean {
+  if (f === "age45") return v.age >= 45;
+  if (f === "age60") return v.age >= 60;
+  return v.initialBuckets.includes(f);
+}
 
 // Priority: raw > nophoto > unsyndicated > aging > done
 function computeBucket(v: VehicleState): BucketKey | null {
@@ -419,7 +490,11 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   const [scene, setScene] = useState<Scene>("connect");
   const [upgradeBucket, setUpgradeBucket] = useState<BucketKey | null>(null);
   const [imsName, setImsName] = useState("Vincue");
+  // Pitch panel state — which bucket is "active" for the side-panel pitch.
+  // Independent of the dashboard chip multi-select below.
   const [activeBucket, setActiveBucket] = useState<BucketKey | null>(null);
+  // Multi-select: any number of filter chips may be lit at once.
+  const [activeFilters, setActiveFilters] = useState<Set<FilterKey>>(() => new Set());
   const [pitchOpen, setPitchOpen] = useState(false);
   const [runningBucket, setRunningBucket] = useState<BucketKey | null>(null);
   const [transformingIds, setTransformingIds] = useState<Set<number>>(new Set());
@@ -446,16 +521,17 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   const effectiveStep = isBeforeView ? 0 : completedCount;
   const dtf = DTF_BY_STEP[effectiveStep];
   const score = SCORE_BY_STEP[effectiveStep];
-  const saved = SAVED_BY_STEP[effectiveStep];
+  const holdingCost = HOLDING_COST_BY_STEP[effectiveStep];
   // Persistent uplift since the previous resolved bucket (used by the KPI bar
   // to show e.g. "+2 days saved" / "+1.1" next to the current value).
   // In Before view we suppress uplifts since there's no preceding step.
   const prevDtf   = !isBeforeView && completedCount > 0 ? DTF_BY_STEP[completedCount - 1]   : null;
   const prevScore = !isBeforeView && completedCount > 0 ? SCORE_BY_STEP[completedCount - 1] : null;
-  const prevSaved = !isBeforeView && completedCount > 0 ? SAVED_BY_STEP[completedCount - 1] : null;
+  const prevHoldingCost = !isBeforeView && completedCount > 0 ? HOLDING_COST_BY_STEP[completedCount - 1] : null;
   const dtfUplift   = prevDtf   != null ? prevDtf - dtf : 0;
   const scoreUplift = prevScore != null ? score - prevScore : 0;
-  const savedUplift = prevSaved != null ? saved - prevSaved : 0;
+  // Positive = holding cost dropped this step (good).
+  const holdingCostDrop = prevHoldingCost != null ? prevHoldingCost - holdingCost : 0;
 
   const buckets: Record<BucketKey, BucketState> = useMemo(() => ({
     raw:          { count: BUCKET_TOTALS.raw,          completed: isBeforeView ? false : completed.raw },
@@ -468,10 +544,17 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   // Before view freezes vehicle state to the SEED (no transformations applied);
   // Current view uses the live `vehicles` state that mutates as buckets resolve.
   const visibleVehicles = isBeforeView ? SEED : vehicles;
+  // Union semantics — a vehicle is visible if it matches ANY active filter.
+  // Empty set = no filter, show everything.
   const visibleRows: Row[] = useMemo(() => {
-    if (!activeBucket) return visibleVehicles;
-    return visibleVehicles.filter((v) => v.initialBuckets.includes(activeBucket));
-  }, [visibleVehicles, activeBucket]);
+    if (activeFilters.size === 0) return visibleVehicles;
+    return visibleVehicles.filter((v) => {
+      for (const f of activeFilters) {
+        if (matchesFilter(v, f)) return true;
+      }
+      return false;
+    });
+  }, [visibleVehicles, activeFilters]);
 
   // Selecting a filter no longer tints the rows — the table stays white. Row
   // colour is reserved for the transformation animation (purple shimmer) only.
@@ -485,7 +568,20 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   }, []);
 
   const handleLoadingComplete = useCallback(() => {
-    setScene("scanning");
+    setScene("synced");
+  }, []);
+
+  // Synced screen — AE clicks the "Scan your inventory" button on the Figma
+  // import; we walk up the DOM to detect that text on the click target.
+  const handleSyncedClick = useCallback((e: React.MouseEvent) => {
+    let el: HTMLElement | null = e.target as HTMLElement;
+    while (el) {
+      if (el.textContent?.toLowerCase().includes("scan your inventory")) {
+        setScene("scanning");
+        return;
+      }
+      el = el.parentElement;
+    }
   }, []);
 
   const handleScanComplete = useCallback(() => {
@@ -493,24 +589,58 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   }, []);
 
   // ─── Bucket click → filter + open pitch (no transformation yet) ──
-  // Opening the pitch also collapses the Need Actions FAB so the side panel
-  // has the visual focus.
+  // Opening a pitch resets the chip multi-select to just that bucket so the
+  // dashboard always agrees with the pitch panel. (Users can multi-select
+  // chips again afterwards without touching the FAB.)
   const handleBucketClick = useCallback((b: BucketKey) => {
     setActiveBucket((prev) => prev === b ? prev : b);
+    setActiveFilters(new Set([b]));
     setPitchOpen(true);
     setFabExpanded(false);
   }, []);
 
   const handleClearBucket = useCallback(() => {
     setActiveBucket(null);
+    setActiveFilters(new Set());
     setPitchOpen(false);
   }, []);
 
-  // Filter chips on the dashboard only filter the list — they don't open the
-  // pitch panel. The Need Actions FAB is the only entry into the pitch.
-  const handleFilterChange = useCallback((b: BucketKey | null) => {
-    setActiveBucket(b);
-  }, []);
+  // Filter chips toggle in/out of a multi-select set. Aging-related chips
+  // (Aging Units, >45+ Days, >60+ Days) also drive the SelectionActionBar by
+  // auto-adding their matches when toggled on.
+  const handleFilterChange = useCallback((f: FilterKey | null) => {
+    setCampaignSelectionMode(false);
+
+    if (f === null) {
+      setActiveFilters(new Set());
+      setSelectedVehicleIds(new Set());
+      return;
+    }
+
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      const wasActive = next.has(f);
+      if (wasActive) next.delete(f); else next.add(f);
+
+      // Recompute auto-selection from the post-toggle set of aging-ish filters
+      const agingActive: FilterKey[] = [];
+      for (const k of next) {
+        if (k === "aging" || k === "age45" || k === "age60") agingActive.push(k);
+      }
+      if (agingActive.length === 0) {
+        setSelectedVehicleIds(new Set());
+      } else {
+        const ids = new Set<number>();
+        for (const af of agingActive) {
+          for (const v of vehicles) {
+            if (matchesFilter(v, af)) ids.add(v.id);
+          }
+        }
+        setSelectedVehicleIds(ids);
+      }
+      return next;
+    });
+  }, [vehicles]);
 
   // ─── Run the actual transformation animation on the affected rows ──
   // Used by both the FAB's Transform button and (for aging) the Create-Campaign FAB.
@@ -537,15 +667,28 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
     setTransformingIds(targetIds);
     // Focus the list on the bucket so the AE sees the rows in motion
     setActiveBucket(bucket);
+    // Close the pitch drawer so the magic animation plays on the full dashboard
+    setPitchOpen(false);
 
-    // 1.6s shimmer pass → then apply state + clear the running flag
+    // 3.0s shimmer pass → then apply state + clear the running flag
     setTimeout(() => {
       setVehicles((vs) => vs.map((v) => applyAction(v, bucket, options)));
       setCompleted((c) => ({ ...c, [bucket]: true }));
       setTransformingIds(new Set());
       setRunningBucket(null);
-    }, 1600);
+      // Re-open the drawer to reveal the success state of the same pitch
+      setPitchOpen(true);
+    }, 3000);
   }, [vehicles, runningBucket, completed]);
+
+  // Center-of-dashboard overlay label while a transform animation is playing.
+  const TRANSFORM_OVERLAY_LABELS: Record<BucketKey, string> = {
+    raw:          "Transforming your inventory",
+    nophoto:      "Applying Smart Match",
+    cgi:          "Applying Studio AI",
+    unsyndicated: "Syndicating to channels",
+    aging:        "Launching Smart Campaigns",
+  };
 
   // From the SmartCampaign pitch CTA → close pitch, minimise the Need Actions
   // FAB, auto-select all aging vehicles, and surface the SelectionActionBar so
@@ -601,6 +744,13 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
       </div>
     );
   }
+  if (scene === "synced") {
+    return (
+      <div className="size-full overflow-auto" onClick={handleSyncedClick}>
+        <Frame31 />
+      </div>
+    );
+  }
   if (scene === "scanning") {
     return (
       <div className="size-full overflow-auto">
@@ -621,16 +771,16 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
   const nextBucket = BUCKET_ORDER.find((k) => k !== activeBucket && !completed[k]) ?? null;
 
   return (
-    <div className="size-full">
+    <div className="size-full relative">
       <Demo2Dashboard
         dtf={dtf}
         score={score}
-        saved={saved}
+        holdingCost={holdingCost}
         dtfUplift={dtfUplift}
         scoreUplift={scoreUplift}
-        savedUplift={savedUplift}
+        holdingCostDrop={holdingCostDrop}
         buckets={buckets}
-        activeBucket={activeBucket}
+        activeFilters={activeFilters}
         onBucketClick={handleBucketClick}
         onFilterChange={handleFilterChange}
         onClearBucket={handleClearBucket}
@@ -653,7 +803,7 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
 
       {/* Selection action bar — surfaces during the Smart Campaign flow */}
       <SelectionActionBar
-        open={campaignSelectionMode && selectedVehicleIds.size > 0}
+        open={selectedVehicleIds.size > 0}
         count={selectedVehicleIds.size}
         onClose={handleCloseSelectionBar}
         onSmartCampaign={() => setSmartCampaignModalOpen(true)}
@@ -698,7 +848,10 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
         const successForActive = (activeBucket && completed[activeBucket] && bucketStep > 0) ? {
           dtfSaved:    DTF_BY_STEP[bucketStep - 1] - DTF_BY_STEP[bucketStep],
           scoreGained: SCORE_BY_STEP[bucketStep] - SCORE_BY_STEP[bucketStep - 1],
-          savedDollars: SAVED_BY_STEP[bucketStep] - SAVED_BY_STEP[bucketStep - 1],
+          scoreBefore: SCORE_BY_STEP[bucketStep - 1],
+          scoreAfter:  SCORE_BY_STEP[bucketStep],
+          savedDollars: holdingCostSavedAtStep(bucketStep),
+          title: successTitle(activeBucket),
         } : undefined;
 
         // Resolve which CTA the pitch should currently show
@@ -710,9 +863,10 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
           onAction = () => setUpgradeBucket(activeBucket!);
         } else if (isActiveCompleted) {
           if (nextBucket) {
-            label = `Move on to ${NEXT_BUCKET_LABELS[nextBucket]}`;
+            label = `Next up: ${NEXT_BUCKET_LABELS[nextBucket]}`;
             onAction = () => {
               setActiveBucket(nextBucket);
+              setActiveFilters(new Set([nextBucket]));
               setPitchOpen(true);
               setFabExpanded(false);
             };
@@ -747,9 +901,33 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
             success={successForActive}
             actionLabel={label}
             locked={isLocked}
+            metricsStep={activeBucket ?? undefined}
+            completedSteps={completedCount}
           />
         );
       })()}
+
+      {/* Center-of-dashboard label while the magic animation is playing */}
+      {runningBucket && (
+        <div className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center">
+          <div
+            className="demo2-transform-overlay flex items-center gap-[14px] px-[26px] py-[16px] rounded-[16px] bg-white/95 backdrop-blur-[6px]"
+            style={{
+              boxShadow: "0 12px 40px rgba(16,185,129,0.18), 0 2px 6px rgba(0,0,0,0.06)",
+              border: "1px solid rgba(16,185,129,0.25)",
+            }}
+          >
+            <span className="relative inline-flex size-[14px] shrink-0">
+              <span className="absolute inset-0 rounded-full bg-[#10B981] opacity-60 animate-ping" />
+              <span className="relative inline-flex size-[14px] rounded-full bg-[#10B981]" />
+            </span>
+            <p className="text-[15px] font-semibold text-[#0a0a0a] font-['Inter:Semi_Bold',sans-serif] leading-none">
+              {TRANSFORM_OVERLAY_LABELS[runningBucket]}
+              <span className="demo2-transform-dots ml-[2px]" />
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Demo 3 (lite plan) — upgrade gate for SmartMatch / SmartCampaigns */}
       {upgradeBucket && (() => {

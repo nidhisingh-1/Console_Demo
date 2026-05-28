@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { MIcon } from "./shared/MIcon";
 
 interface Props {
   open: boolean;
@@ -36,7 +36,7 @@ export function CreateCampaignFab({ open, selectedCount, onCreate, onDismiss }: 
           color: "white",
         }}
       >
-        <Sparkles size={18} strokeWidth={2.2} />
+        <MIcon name="auto_awesome" size={20} fill />
       </div>
       <div className="min-w-0">
         <p className="text-[13px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[16px]">
@@ -59,7 +59,7 @@ export function CreateCampaignFab({ open, selectedCount, onCreate, onDismiss }: 
         className="h-[36px] px-[16px] rounded-[8px] inline-flex items-center gap-[6px] text-[12px] font-semibold text-white font-['Inter:Semi_Bold',sans-serif] bg-[#4600F2] hover:bg-[#3a00d0] shadow-[0_4px_12px_rgba(70,0,242,0.32)]"
       >
         Create Campaign
-        <ArrowRight size={13} strokeWidth={2.5} />
+        <MIcon name="arrow_forward" size={15} weight={500} />
       </button>
     </div>
   );

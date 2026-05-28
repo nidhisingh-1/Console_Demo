@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ChevronDown, Plus, AlertTriangle, ArrowUpDown, MoreVertical, Monitor, Eye, Copy } from "lucide-react";
+import {
+  ChevronDown, Plus, AlertTriangle, ArrowUpDown, MoreVertical, Monitor, Eye, Copy,
+  ImageOff, Camera, Wand2, DollarSign,
+} from "lucide-react";
 import imgCar from "../../imports/Frame2147240604/5dc495ae052ef514c9683fd2a095ba455d93a330.png";
 import { AppHeader, AppSidebar } from "./AppShell";
 import { InventorySnapshotModal } from "./InventorySnapshotModal";
@@ -35,40 +38,152 @@ function Spinner() {
   );
 }
 
-function ScanStatusCard({ noPhotos, rawPhotos, cgiPhotos, statusText }: {
-  noPhotos: number; rawPhotos: number; cgiPhotos: number; statusText: string;
+function ScanStatusCard({
+  noPhotos, rawPhotos, cgiPhotos, holdingCostAtRisk, statusText,
+}: {
+  noPhotos: number;
+  rawPhotos: number;
+  cgiPhotos: number;
+  holdingCostAtRisk: number;
+  statusText: string;
 }) {
+  const stats: Array<{
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    suffix: string;
+    accent: string;
+    tint: string;
+    border: string;
+  }> = [
+    {
+      icon: <ImageOff size={16} strokeWidth={2.2} />,
+      label: "No Photos",
+      value: noPhotos.toString(),
+      suffix: "vehicles",
+      accent: "#DC2626",
+      tint: "rgba(220,38,38,0.06)",
+      border: "rgba(220,38,38,0.18)",
+    },
+    {
+      icon: <Camera size={16} strokeWidth={2.2} />,
+      label: "Raw Photos",
+      value: rawPhotos.toString(),
+      suffix: "vehicles",
+      accent: "#D97706",
+      tint: "rgba(217,119,6,0.06)",
+      border: "rgba(217,119,6,0.20)",
+    },
+    {
+      icon: <Wand2 size={16} strokeWidth={2.2} />,
+      label: "CGI Photos",
+      value: cgiPhotos.toString(),
+      suffix: "vehicles",
+      accent: "#7C3AED",
+      tint: "rgba(124,58,237,0.06)",
+      border: "rgba(124,58,237,0.20)",
+    },
+    {
+      icon: <DollarSign size={16} strokeWidth={2.2} />,
+      label: "Holding cost at risk",
+      value: `$${holdingCostAtRisk.toLocaleString("en-US")}`,
+      suffix: "and climbing",
+      accent: "#B91C1C",
+      tint: "rgba(185,28,28,0.07)",
+      border: "rgba(185,28,28,0.22)",
+    },
+  ];
+
   return (
-    <div className="bg-white rounded-[16px] shadow-[0_1px_8px_rgba(0,0,0,0.07)] mb-5 px-6 py-5 flex items-center gap-0">
-      {/* Left: title + status */}
-      <div className="shrink-0 pr-8 border-r border-black/8 min-w-[240px]">
-        <h2
-          className="text-[22px] font-bold font-['Inter:Bold',sans-serif] leading-tight"
-          style={{ background: "linear-gradient(90deg,#2dd4bf,#6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
-        >
-          Scanning your inventory
-        </h2>
-        <p className="text-[14px] text-[#6B7280] font-medium mt-1 transition-all duration-500 font-['Inter:Medium',sans-serif]">
-          {statusText}
-        </p>
-      </div>
-      {/* Stats */}
-      {[
-        { label: "No Photos", count: noPhotos },
-        { label: "Raw photos", count: rawPhotos },
-        { label: "CGI Photos", count: cgiPhotos },
-      ].map((s, i) => (
-        <div key={i} className="flex items-center gap-5 pl-8 border-r last:border-r-0 border-black/8 pr-8">
-          <div>
-            <p className="text-[13px] text-[#6B7280] font-medium font-['Inter:Medium',sans-serif]">{s.label}</p>
-            <p className="text-[28px] font-bold text-black font-['Inter:Bold',sans-serif] leading-none mt-1">
-              {s.count}
+    <div
+      className="relative rounded-[18px] mb-5 overflow-hidden border border-black/8"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(70,0,242,0.04) 0%, rgba(127,106,242,0.02) 60%, rgba(20,184,166,0.04) 100%)",
+        boxShadow: "0 6px 24px rgba(70,0,242,0.06)",
+      }}
+    >
+      {/* Decorative purple→teal accent strip on the left */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ background: "linear-gradient(180deg, #4600F2 0%, #7F6AF2 50%, #14B8A6 100%)" }}
+      />
+
+      <div className="px-[24px] py-[20px]">
+        {/* Header — title + animated status */}
+        <div className="flex items-center justify-between mb-[18px] gap-[20px]">
+          <div className="min-w-0">
+            <div className="flex items-center gap-[8px] mb-[3px]">
+              <span className="size-[8px] rounded-full bg-[#10B981] animate-pulse" />
+              <span className="text-[10px] font-bold uppercase tracking-[1.4px] text-[#4600F2] font-['Inter:Bold',sans-serif]">
+                Live · IMS Sync
+              </span>
+            </div>
+            <h2
+              className="text-[24px] font-bold font-['Inter:Bold',sans-serif] leading-[28px] tracking-tight"
+              style={{
+                background: "linear-gradient(90deg,#4600F2 0%, #7F6AF2 40%, #14B8A6 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Scanning your inventory
+            </h2>
+            <p
+              key={statusText}
+              className="text-[13px] text-[#374151] font-medium mt-[4px] font-['Inter:Medium',sans-serif] transition-opacity duration-500"
+              style={{ animation: "scanStatusFade 2.5s ease-in-out infinite" }}
+            >
+              {statusText}
             </p>
-            <p className="text-[12px] text-[#9CA3AF] font-medium font-['Inter:Medium',sans-serif] mt-0.5">vehicles</p>
           </div>
           <Spinner />
         </div>
-      ))}
+
+        {/* 4-up stat strip */}
+        <div className="grid grid-cols-4 gap-[10px]">
+          {stats.map((s, i) => (
+            <div
+              key={i}
+              className="rounded-[12px] border bg-white/80 backdrop-blur-sm px-[14px] py-[12px]"
+              style={{ borderColor: s.border }}
+            >
+              <div className="flex items-center gap-[8px] mb-[6px]">
+                <span
+                  className="size-[26px] rounded-[8px] flex items-center justify-center shrink-0"
+                  style={{ background: s.tint, color: s.accent }}
+                >
+                  {s.icon}
+                </span>
+                <p
+                  className="text-[10px] font-bold uppercase tracking-[0.8px] font-['Inter:Bold',sans-serif]"
+                  style={{ color: s.accent }}
+                >
+                  {s.label}
+                </p>
+              </div>
+              <p
+                className="text-[26px] font-bold font-['Inter:Bold',sans-serif] leading-none tabular-nums tracking-tight"
+                style={{ color: "#0a0a0a" }}
+              >
+                {s.value}
+              </p>
+              <p className="mt-[4px] text-[11px] text-black/45 font-['Inter:Regular',sans-serif]">
+                {s.suffix}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CSS keyframe for the subtle status fade */}
+      <style>{`
+        @keyframes scanStatusFade {
+          0%, 100% { opacity: 0.8; }
+          50%      { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -224,6 +339,9 @@ export function ScanningScreen({
   const [noPhotos, setNoPhotos] = useState(12);
   const [rawPhotos, setRawPhotos] = useState(102);
   const [cgiPhotos, setCgiPhotos] = useState(72);
+  // Cumulative holding cost at risk — ticks up as we discover not-retail-ready
+  // (no-photo + raw) vehicles. Provides a dollar-anchored urgency signal.
+  const holdingCostAtRisk = (noPhotos + rawPhotos) * benchmarks.holdingCostPerDay;
   const VISIBLE_ROWS = 6;
   const [vehicles, setVehicles] = useState<Vehicle[]>(() =>
     vehiclePool.slice(0, VISIBLE_ROWS).map((v, i) => ({ ...v, id: i + 1 }))
@@ -252,7 +370,7 @@ export function ScanningScreen({
 
   // After 8s of scanning, surface the inventory snapshot modal
   useEffect(() => {
-    const t = setTimeout(() => setStage("snapshot"), 3500);
+    const t = setTimeout(() => setStage("snapshot"), 5000);
     return () => clearTimeout(t);
   }, []);
 
@@ -369,6 +487,7 @@ export function ScanningScreen({
               noPhotos={noPhotos}
               rawPhotos={rawPhotos}
               cgiPhotos={cgiPhotos}
+              holdingCostAtRisk={holdingCostAtRisk}
               statusText={statusMessages[statusIdx]}
             />
 
@@ -421,6 +540,8 @@ export function ScanningScreen({
         noPhotos={90}
         rawPhotos={67}
         cgiPhotos={134}
+        holdingCostPerDay={benchmarks.holdingCostPerDay}
+        daysToList={benchmarks.daysToFrontline}
         onStart={() => {
           if (snapshotOnly) {
             setStage("done");

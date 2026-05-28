@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import {
-  Camera, ImageOff, Send, TrendingDown, Wand2,
-  ArrowRight, Minus, Check, AlertCircle,
-} from "lucide-react";
+import { MIcon } from "./shared/MIcon";
 import type { BucketKey, BucketState } from "./Demo2Dashboard";
 
 const BUCKET_DEFS: Array<{
@@ -11,11 +8,11 @@ const BUCKET_DEFS: Array<{
   label: string;
   icon: React.ReactNode;
 }> = [
-  { key: "raw",          label: "Raw media awaiting processing", icon: <Camera size={14} strokeWidth={2.2} /> },
-  { key: "nophoto",      label: "No photos",                     icon: <ImageOff size={14} strokeWidth={2.2} /> },
-  { key: "cgi",          label: "Standard photos awaiting CGI",  icon: <Wand2 size={14} strokeWidth={2.2} /> },
-  { key: "unsyndicated", label: "Not syndicated",                icon: <Send size={14} strokeWidth={2.2} /> },
-  { key: "aging",        label: "Aging, high holding cost",      icon: <TrendingDown size={14} strokeWidth={2.2} /> },
+  { key: "raw",          label: "Raw media awaiting processing", icon: <MIcon name="camera_alt" size={16} /> },
+  { key: "nophoto",      label: "No photos",                     icon: <MIcon name="image_not_supported" size={16} /> },
+  { key: "cgi",          label: "Standard photos awaiting CGI",  icon: <MIcon name="auto_fix_high" size={16} /> },
+  { key: "unsyndicated", label: "Not syndicated",                icon: <MIcon name="send" size={16} /> },
+  { key: "aging",        label: "Aging, high holding cost",      icon: <MIcon name="trending_down" size={16} /> },
 ];
 
 export interface InventoryDiagnosticFabProps {
@@ -76,7 +73,7 @@ export function InventoryDiagnosticFab({
             : "linear-gradient(90deg, #DC2626 0%, #EF4444 100%)",
         }}
       >
-        {allResolved ? <Check size={16} strokeWidth={2.5} /> : <AlertCircle size={16} strokeWidth={2.5} />}
+        {allResolved ? <MIcon name="check" size={18} weight={600} /> : <MIcon name="error" size={18} weight={500} />}
         Actions required
         <span className="size-[24px] rounded-full bg-white flex items-center justify-center ring-2 text-[11px] font-bold"
           style={{
@@ -112,7 +109,7 @@ export function InventoryDiagnosticFab({
             className="absolute top-[14px] right-[14px] size-[30px] rounded-full hover:bg-black/5 flex items-center justify-center transition-colors"
             aria-label="Minimize"
           >
-            <Minus size={17} className="text-black/55" strokeWidth={2.5} />
+            <MIcon name="remove" size={18} className="text-black/55" weight={500} />
           </button>
           {allResolved ? (
             <p className="text-[22px] font-bold leading-[28px] font-['Inter:Bold',sans-serif] pr-[36px]">
@@ -159,7 +156,7 @@ export function InventoryDiagnosticFab({
                   }}
                 >
                   {isCompleted
-                    ? <Check size={17} strokeWidth={3} />
+                    ? <MIcon name="check" size={18} weight={600} />
                     : <span className="scale-[1.2] flex">{def.icon}</span>}
                 </span>
                 <span className="flex-1 text-[14px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] truncate">
@@ -173,7 +170,7 @@ export function InventoryDiagnosticFab({
                   {isCompleted ? "Done" : `${state.count} vehicles`}
                 </span>
                 {!isCompleted && (
-                  <ArrowRight size={16} className="text-[#4600F2] shrink-0" strokeWidth={2.5} />
+                  <MIcon name="arrow_forward" size={18} className="text-[#4600F2] shrink-0" weight={500} />
                 )}
               </button>
             );

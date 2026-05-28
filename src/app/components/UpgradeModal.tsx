@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
-import {
-  User, Clock, MapPin, ChevronLeft, ChevronRight, ChevronDown,
-  X, Check, Calendar as CalendarIcon, Globe,
-} from "lucide-react";
+import { MIcon } from "./shared/MIcon";
 
 interface Props {
   open: boolean;
@@ -168,7 +165,7 @@ export function UpgradeModal({ open, onClose, onBook }: Props) {
           className="absolute top-[14px] right-[14px] z-10 size-[30px] rounded-full bg-white/95 hover:bg-black/5 flex items-center justify-center transition-colors shadow-sm"
           aria-label="Close"
         >
-          <X size={16} className="text-black/65" />
+          <MIcon name="close" size={18} className="text-black/65" />
         </button>
 
         {/* LEFT RAIL — Spyne-branded meeting card (stays mounted across steps) */}
@@ -190,15 +187,15 @@ export function UpgradeModal({ open, onClose, onBook }: Props) {
               Schedule a call to get started!
             </p>
             <div className="mt-[18px] space-y-[10px]">
-              <Detail icon={<User size={14} className="text-black/55" strokeWidth={2} />}>Jessica</Detail>
-              <Detail icon={<Clock size={14} className="text-black/55" strokeWidth={2} />}>30 minutes</Detail>
-              <Detail icon={<MapPin size={14} className="text-black/55" strokeWidth={2} />}>Google Meet</Detail>
+              <Detail icon={<MIcon name="person" size={16} className="text-black/55" />}>Jessica</Detail>
+              <Detail icon={<MIcon name="schedule" size={16} className="text-black/55" />}>30 minutes</Detail>
+              <Detail icon={<MIcon name="place" size={16} className="text-black/55" />}>Google Meet</Detail>
               {(step === "form" || step === "success") && (
                 <>
-                  <Detail icon={<CalendarIcon size={14} className="text-black/55" strokeWidth={2} />}>
+                  <Detail icon={<MIcon name="calendar_today" size={16} className="text-black/55" />}>
                     {selectedDateShort} · {selectedTime}
                   </Detail>
-                  <Detail icon={<Globe size={14} className="text-black/55" strokeWidth={2} />}>{timezone}</Detail>
+                  <Detail icon={<MIcon name="public" size={16} className="text-black/55" />}>{timezone}</Detail>
                 </>
               )}
             </div>
@@ -232,8 +229,8 @@ export function UpgradeModal({ open, onClose, onBook }: Props) {
                     {monthLabel}
                   </h3>
                   <div className="flex items-center gap-[6px]">
-                    <NavBtn onClick={goPrev} aria="Previous month"><ChevronLeft size={14} /></NavBtn>
-                    <NavBtn onClick={goNext} aria="Next month"><ChevronRight size={14} /></NavBtn>
+                    <NavBtn onClick={goPrev} aria="Previous month"><MIcon name="chevron_left" size={16} /></NavBtn>
+                    <NavBtn onClick={goNext} aria="Next month"><MIcon name="chevron_right" size={16} /></NavBtn>
                   </div>
                 </div>
 
@@ -278,9 +275,9 @@ export function UpgradeModal({ open, onClose, onBook }: Props) {
                     onClick={() => setTzOpen((o) => !o)}
                     className="inline-flex items-center gap-[6px] text-[12px] text-black/65 font-['Inter:Medium',sans-serif] font-medium hover:text-black/85"
                   >
-                    <Globe size={12} className="text-black/45" />
+                    <MIcon name="public" size={14} className="text-black/45" />
                     {timezone}
-                    <ChevronDown size={13} className="text-black/45" />
+                    <MIcon name="expand_more" size={15} className="text-black/45" />
                   </button>
                   {tzOpen && (
                     <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[200px] bg-white rounded-[10px] border border-black/10 shadow-[0_12px_28px_rgba(0,0,0,0.15)] py-[6px]">
@@ -381,7 +378,7 @@ export function UpgradeModal({ open, onClose, onBook }: Props) {
                   onClick={() => setStep("pick")}
                   className="inline-flex items-center gap-[6px] h-[40px] px-[14px] rounded-[10px] text-[13px] font-semibold text-black/65 hover:bg-black/5 font-['Inter:Semi_Bold',sans-serif]"
                 >
-                  <ChevronLeft size={14} />
+                  <MIcon name="chevron_left" size={16} />
                   Back
                 </button>
                 <button
@@ -405,7 +402,7 @@ export function UpgradeModal({ open, onClose, onBook }: Props) {
                   boxShadow: "0 12px 30px rgba(16,185,129,0.35)",
                 }}
               >
-                <Check size={36} strokeWidth={3} className="text-white" />
+                <MIcon name="check" size={40} weight={700} className="text-white" />
               </div>
               <h3 className="text-[22px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[26px]">
                 You're booked, {form.name.split(" ")[0] || "there"}!

@@ -1,6 +1,4 @@
-import {
-  Monitor, Eye, Copy, Layers, AlertTriangle, MoreVertical, ImageOff, Megaphone, Check, Wand2, Pencil,
-} from "lucide-react";
+import { MIcon } from "./MIcon";
 import imgCar from "../../../imports/Frame2147240604/5dc495ae052ef514c9683fd2a095ba455d93a330.png";
 import { PublishingCell } from "../PublishingCell";
 import type { PublishedTo } from "../publishPlatforms";
@@ -94,7 +92,7 @@ export function VehicleRow({
         <div className="flex items-center gap-3">
           {row.noPhoto ? (
             <div className="w-[68px] h-[48px] rounded-[6px] bg-[#F3F4F6] flex items-center justify-center text-[#9CA3AF] shrink-0">
-              <ImageOff size={18} strokeWidth={2} />
+              <MIcon name="image_not_supported" size={20} />
             </div>
           ) : (
             <img
@@ -116,18 +114,28 @@ export function VehicleRow({
                 <path d="M9 9h6M9 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <p className="text-[12px] text-[#374151] mt-0.5 font-medium">{row.price}</p>
+            <div className="flex items-center gap-[6px] mt-0.5">
+              <p className="text-[12px] text-[#374151] font-medium">{row.price}</p>
+              {row.campaignActive && (
+                <span className="demo2-badge-pop inline-flex items-center gap-[3px] px-[6px] py-[1px] rounded-full text-[9px] font-bold uppercase tracking-[0.4px] bg-[rgba(70,0,242,0.1)] text-[#4600F2]">
+                  <MIcon name="campaign" size={10} weight={600} />
+                  Campaign Live
+                </span>
+              )}
+            </div>
           </div>
           {/* Loud right-aligned Edit button — sits inside the Vehicle cell so
-              it's the obvious next action when the AE wants to fix one row. */}
+              it's the obvious next action when the AE wants to fix one row.
+              `self-start` aligns it with the vehicle name (top of the row), not
+              the vertical centre of the cell. */}
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
             title="Edit vehicle"
             aria-label="Edit vehicle"
-            className="ml-auto shrink-0 inline-flex items-center gap-[5px] h-[30px] px-[10px] rounded-[8px] bg-[rgba(70,0,242,0.08)] hover:bg-[#4600F2] text-[#4600F2] hover:text-white border border-[rgba(70,0,242,0.18)] hover:border-[#4600F2] text-[11.5px] font-semibold font-['Inter:Semi_Bold',sans-serif] transition-colors"
+            className="ml-auto self-start mt-[2px] shrink-0 inline-flex items-center gap-[5px] h-[28px] px-[10px] rounded-[8px] bg-[rgba(70,0,242,0.08)] hover:bg-[#4600F2] text-[#4600F2] hover:text-white border border-[rgba(70,0,242,0.18)] hover:border-[#4600F2] text-[11.5px] font-semibold font-['Inter:Semi_Bold',sans-serif] transition-colors"
           >
-            <Pencil size={12} strokeWidth={2.4} />
+            <MIcon name="edit" size={14} weight={500} />
             Edit
           </button>
         </div>
@@ -137,7 +145,7 @@ export function VehicleRow({
         <p className={`text-[13px] font-semibold ${ageClass}`}>
           {row.age} days
           {row.isLoss && (
-            <AlertTriangle size={11} className="inline-block ml-[4px] -mt-[2px] text-[#EF4444]" />
+            <MIcon name="warning" size={13} className="inline-block ml-[4px] -mt-[2px] text-[#EF4444]" />
           )}
         </p>
         <p className="text-[11px] text-[#9CA3AF] mt-0.5 font-['Inter:Regular',sans-serif]">{row.date}</p>
@@ -146,9 +154,9 @@ export function VehicleRow({
       <td className="py-3 px-4 border-r border-black/5">
         <div className="flex flex-col items-start gap-[4px]">
           <div className="flex items-center gap-1">
-            {[Monitor, Eye, Copy].map((Icon, i) => (
+            {(["desktop_windows", "visibility", "content_copy"] as const).map((iconName, i) => (
               <button key={i} className="p-1 rounded hover:bg-gray-100 text-[#9CA3AF]">
-                <Icon size={15} />
+                <MIcon name={iconName} size={17} />
               </button>
             ))}
           </div>
@@ -160,35 +168,30 @@ export function VehicleRow({
           )}
           {row.mediaState === "processed" && (
             <span className="demo2-badge-pop inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[9px] font-bold uppercase tracking-[0.5px] bg-[rgba(16,185,129,0.12)] text-[#059669]">
-              <Check size={9} strokeWidth={3} />
+              <MIcon name="check" size={11} weight={700} />
               Processed
             </span>
           )}
           {row.smartMatched && (
             <span className="demo2-badge-pop smart-match-badge siri-shimmer-bg inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[9px] font-bold text-white font-['Inter:Bold',sans-serif] uppercase tracking-[0.5px] shadow-[0_2px_8px_rgba(127,106,242,0.35)]">
-              <Layers size={9} strokeWidth={2.8} />
+              <MIcon name="layers" size={11} weight={600} />
               SmartMatched
             </span>
           )}
           {/* Demo 1 spotlight badge — preserved */}
           {row.smartMatch && !row.smartMatched && (
             <span className="smart-match-badge siri-shimmer-bg inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[9px] font-bold text-white font-['Inter:Bold',sans-serif] uppercase tracking-[0.5px] shadow-[0_2px_8px_rgba(127,106,242,0.35)]">
-              <Layers size={9} strokeWidth={2.8} />
+              <MIcon name="layers" size={11} weight={600} />
               Smart Match
             </span>
           )}
           {row.cgiUpgraded && (
             <span className="demo2-badge-pop inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[9px] font-bold uppercase tracking-[0.5px] bg-[rgba(139,92,246,0.15)] text-[#7C3AED]">
-              <Wand2 size={9} strokeWidth={2.8} />
+              <MIcon name="auto_fix_high" size={11} weight={600} />
               CGI
             </span>
           )}
-          {row.campaignActive && (
-            <span className="demo2-badge-pop inline-flex items-center gap-[3px] px-[7px] py-[2px] rounded-full text-[9px] font-bold uppercase tracking-[0.5px] bg-[rgba(70,0,242,0.1)] text-[#4600F2]">
-              <Megaphone size={9} strokeWidth={2.8} />
-              Campaign Live
-            </span>
-          )}
+          {/* Campaign Live badge moved into the Vehicle column (next to the price). */}
         </div>
       </td>
       {/* Media Score — color-coded the same way as the Inventory Score gauge:
@@ -230,15 +233,15 @@ export function VehicleRow({
           <span className="text-[#10B981]">{row.daysToFrontline} days</span>
         )}
       </td>
-      {/* Hold Cost */}
-      <td className="py-3 pr-2">
+      {/* Hold Cost — last column, no right divider, matches px-[16px] inset on the others */}
+      <td className="py-3 pl-4 pr-3">
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0">
             <span className={`text-[13px] font-bold inline-flex items-center gap-[4px] ${
               row.isLoss ? "text-[#EF4444]" : "text-[#111]"
             }`}>
               ${row.holdCost.toLocaleString()}
-              {row.isLoss && <AlertTriangle size={12} strokeWidth={2.5} />}
+              {row.isLoss && <MIcon name="warning" size={14} weight={500} />}
             </span>
             <div className="mt-1 w-[100px] h-[4px] rounded-full bg-gray-100 overflow-hidden">
               <div
@@ -261,7 +264,7 @@ export function VehicleRow({
             aria-label="More"
             className="size-[26px] shrink-0 mt-0.5 rounded-md hover:bg-black/5 flex items-center justify-center text-black/40 hover:text-black/70 transition-colors"
           >
-            <MoreVertical size={14} />
+            <MIcon name="more_vert" size={16} />
           </button>
         </div>
       </td>

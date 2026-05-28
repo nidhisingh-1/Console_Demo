@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
-import {
-  Plus, Sparkles, ChevronDown, Filter, Download, Eye, CircleDot, Info,
-  Camera, ImageOff, Wand2, Send, TrendingDown,
-} from "lucide-react";
+import { MIcon } from "./shared/MIcon";
 import { AppHeader, AppSidebar } from "./AppShell";
 import { VehicleRow, ColHeader, type Row } from "./shared/VehicleRow";
 import { MiniBars } from "./shared/KpiCards";
@@ -12,6 +9,8 @@ import { KpiDelta } from "./shared/KpiDelta";
 import { ScoreGauge } from "./ScoreGauge";
 
 export type BucketKey = "raw" | "nophoto" | "cgi" | "unsyndicated" | "aging";
+/** Dashboard filter key — buckets + age-threshold sub-filters. */
+export type FilterKey = BucketKey | "age45" | "age60";
 
 export interface BucketState {
   count: number;
@@ -22,18 +21,19 @@ export interface BucketState {
 export interface Demo2DashboardProps {
   dtf: number;
   score: number;
-  /** Cumulative holding-cost dollars saved across resolved buckets. */
-  saved: number;
+  /** Total holding cost still accruing on open issues — decreases as buckets resolve. */
+  holdingCost: number;
   /** Persistent delta versus the previous resolved bucket (post-transformation) */
-  dtfUplift: number;   // positive when DTF dropped
-  scoreUplift: number; // positive when score rose
-  savedUplift: number; // positive when more money was saved this step
+  dtfUplift: number;        // positive when DTF dropped
+  scoreUplift: number;      // positive when score rose
+  holdingCostDrop: number;  // positive when holding cost dropped this step
   buckets: Record<BucketKey, BucketState>;
-  activeBucket: BucketKey | null;
+  /** Multi-select: any number of filter chips may be active at once. */
+  activeFilters: Set<FilterKey>;
   /** Used by the FAB — opens the pitch panel too. */
   onBucketClick: (b: BucketKey) => void;
-  /** Used by the on-dashboard filter chips — filter only, no pitch open. */
-  onFilterChange: (b: BucketKey | null) => void;
+  /** Used by the on-dashboard filter chips — toggles f in activeFilters. */
+  onFilterChange: (f: FilterKey | null) => void;
   onClearBucket: () => void;
   rows: Row[];
   /** IDs of rows to spotlight (per-scene focus). */
@@ -53,7 +53,7 @@ function Tab({ label, count, active, onClick }: {
     <button
       type="button"
       onClick={onClick}
-      className={`relative pb-[10px] pt-[2px] text-[13px] font-['Inter:Semi_Bold',sans-serif] transition-colors ${
+      className={`relative pb-[10px] pt-[2px] text-[16px] font-['Inter:Semi_Bold',sans-serif] transition-colors ${
         active ? "text-[#4600F2] font-semibold" : "text-black/55 hover:text-[#0a0a0a] font-medium"
       }`}
     >
@@ -92,18 +92,22 @@ function UpliftBadge({ text }: { text: string }) {
 }
 
 interface FilterCardDef {
-  key: BucketKey;
+  key: FilterKey;
   label: string;
   icon: React.ReactNode;
   color: string;
+  /** True for bucket filters (drive the buckets count badge); false for age filters. */
+  isBucket: boolean;
 }
 
 const FILTER_CARDS: FilterCardDef[] = [
-  { key: "nophoto",      label: "No Photos",      icon: <ImageOff size={20} strokeWidth={2} />,       color: "#EF4444" },
-  { key: "raw",          label: "Raw Photos",     icon: <Camera size={20} strokeWidth={2} />,         color: "#F59E0B" },
-  { key: "cgi",          label: "CGI Photos",     icon: <Wand2 size={20} strokeWidth={2} />,          color: "#7C3AED" },
-  { key: "unsyndicated", label: "Not Syndicated", icon: <Send size={20} strokeWidth={2} />,           color: "#4600F2" },
-  { key: "aging",        label: "Aging Units",    icon: <TrendingDown size={20} strokeWidth={2} />,   color: "#DC2626" },
+  { key: "nophoto",      label: "No Photos",      icon: <MIcon name="image_not_supported" size={18} />, color: "#EF4444", isBucket: true },
+  { key: "raw",          label: "Raw Photos",     icon: <MIcon name="camera_alt" size={18} />,          color: "#F59E0B", isBucket: true },
+  { key: "cgi",          label: "CGI Photos",     icon: <MIcon name="auto_fix_high" size={18} />,       color: "#7C3AED", isBucket: true },
+  { key: "unsyndicated", label: "Not Syndicated", icon: <MIcon name="send" size={18} />,                color: "#4600F2", isBucket: true },
+  // "Aging Units" chip removed — the age-threshold chips below cover it.
+  { key: "age45",        label: ">45+ Days",      icon: <MIcon name="warning" size={18} />,             color: "#DC2626", isBucket: false },
+  { key: "age60",        label: ">60+ Days",      icon: <MIcon name="warning" size={18} />,             color: "#B91C1C", isBucket: false },
 ];
 
 // Verbal status descriptors so the AE can read the KPI at a glance instead of
@@ -132,8 +136,8 @@ function barsFor(value: number, max: number, higherBetter = false): number[] {
 }
 
 export function Demo2Dashboard({
-  dtf, score, saved, dtfUplift, scoreUplift, savedUplift,
-  buckets, activeBucket, onBucketClick, onFilterChange, onClearBucket,
+  dtf, score, holdingCost, dtfUplift, scoreUplift, holdingCostDrop,
+  buckets, activeFilters, onBucketClick, onFilterChange, onClearBucket,
   rows, highlightIds, transformingIds,
   selectedIds, onToggleSelect, onNavigate,
 }: Demo2DashboardProps) {
@@ -186,18 +190,20 @@ export function Demo2Dashboard({
         );
       }
     }
-    if (activeBucket) {
-      const active = document.querySelector<HTMLElement>(
+    if (activeFilters.size > 0) {
+      // Pulse only the most-recently-toggled chip (the last data-active one)
+      const actives = document.querySelectorAll<HTMLElement>(
         `[data-filter-card][data-active="true"]`
       );
-      if (active) {
-        gsap.fromTo(active,
+      const last = actives[actives.length - 1];
+      if (last) {
+        gsap.fromTo(last,
           { scale: 1 },
           { scale: 1.04, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1 }
         );
       }
     }
-  }, [activeBucket]);
+  }, [activeFilters]);
 
   useEffect(() => {
     if (transformingIds.size === 0) return;
@@ -210,28 +216,31 @@ export function Demo2Dashboard({
 
     const tl = gsap.timeline();
 
+    // Mint / teal wash — softer than the brand purple and reads as "processing"
+    // instead of paint-the-row. Total runtime targets ~3.0s to match the new
+    // overlay window.
     tl.fromTo(
       rows,
-      { backgroundColor: "rgba(70,0,242,0.04)" },
+      { backgroundColor: "rgba(16,185,129,0.05)" },
       {
-        backgroundColor: "rgba(70,0,242,0.34)",
-        duration: 0.34,
-        stagger: 0.10,
+        backgroundColor: "rgba(16,185,129,0.22)",
+        duration: 0.55,
+        stagger: 0.12,
         ease: "power2.out",
       }
     );
 
     tl.to(rows, {
-      backgroundColor: "rgba(70,0,242,0.52)",
-      duration: 0.18,
+      backgroundColor: "rgba(16,185,129,0.32)",
+      duration: 0.22,
       ease: "sine.inOut",
       yoyo: true,
-      repeat: 3,
+      repeat: 5,
     });
 
     tl.to(rows, {
-      backgroundColor: "rgba(70,0,242,0.10)",
-      duration: 0.30,
+      backgroundColor: "rgba(16,185,129,0.10)",
+      duration: 0.45,
       ease: "power2.out",
     });
     tl.set(rows, { clearProps: "backgroundColor" });
@@ -266,14 +275,14 @@ export function Demo2Dashboard({
               <div className="flex items-center gap-[10px]">
                 <button className="flex items-center gap-[6px] h-[36px] px-[14px] bg-white border border-black/10 rounded-[8px] text-[12px] font-medium text-[#374151] hover:bg-gray-50 font-['Inter:Medium',sans-serif]">
                   Holding Cost: <span className="text-[#4600f2] font-semibold">$45/day</span>
-                  <ChevronDown size={13} className="text-gray-400" />
+                  <MIcon name="expand_more" size={16} className="text-gray-400" />
                 </button>
                 <button className="flex items-center gap-[6px] h-[36px] px-[14px] bg-white border border-[#4600F2] rounded-[8px] text-[12px] font-semibold text-[#4600F2] hover:bg-[rgba(70,0,242,0.04)] font-['Inter:Semi_Bold',sans-serif]">
-                  <Sparkles size={13} />
+                  <MIcon name="auto_awesome" size={15} />
                   Create SmartCampaign
                 </button>
                 <button className="flex items-center gap-[6px] h-[36px] px-[14px] bg-[#4600F2] rounded-[8px] text-[12px] font-semibold text-white hover:bg-[#3a00d0] font-['Inter:Semi_Bold',sans-serif]">
-                  <Plus size={14} strokeWidth={2.5} />
+                  <MIcon name="add" size={16} weight={500} />
                   Add New Inventory
                 </button>
               </div>
@@ -312,7 +321,7 @@ export function Demo2Dashboard({
               </div>
             </div>
 
-            {/* KPI bar — DTF, Inventory Score, Money Saved. Each card carries:
+            {/* KPI bar — DTF, Inventory Score, Holding Cost. Each card carries:
                 ▸ a label + info icon on the top row
                 ▸ the main figure + persistent uplift indicator on the bottom-left
                 ▸ a status pill (Critical / Needs attention / Healthy) on the bottom-right */}
@@ -331,7 +340,7 @@ export function Demo2Dashboard({
                     className="ml-auto size-[18px] rounded-full hover:bg-black/5 flex items-center justify-center text-black/40"
                     aria-label="About Days to Frontline"
                   >
-                    <Info size={13} strokeWidth={2.2} />
+                    <MIcon name="info" size={15} />
                   </button>
                 </div>
                 <div className="flex items-end justify-between gap-[10px] mt-auto pt-[10px]">
@@ -376,7 +385,7 @@ export function Demo2Dashboard({
                     className="ml-auto size-[18px] rounded-full hover:bg-black/5 flex items-center justify-center text-black/40"
                     aria-label="About Inventory Score"
                   >
-                    <Info size={13} strokeWidth={2.2} />
+                    <MIcon name="info" size={15} />
                   </button>
                 </div>
                 <div className="flex items-end justify-between gap-[12px] mt-auto pt-[4px]">
@@ -410,42 +419,58 @@ export function Demo2Dashboard({
                 </div>
               </div>
 
-              {/* ── 3. Money Saved (cumulative holding-cost recovery) ──── */}
-              <div className="relative flex-1 rounded-[14px] border border-black/8 bg-white px-[18px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col">
-                <KpiDelta value={saved} direction="up-good" decimals={0} suffix="" />
-                <div className="flex items-center gap-[6px]">
-                  <span className="size-[8px] rounded-full bg-[#059669]" />
-                  <p className="text-[12px] font-semibold text-black/55 font-['Inter:Semi_Bold',sans-serif] uppercase tracking-[0.3px]">
-                    Money Saved
-                  </p>
-                  <button
-                    type="button"
-                    title="Cumulative holding-cost dollars recovered across all resolved buckets so far this session."
-                    className="ml-auto size-[18px] rounded-full hover:bg-black/5 flex items-center justify-center text-black/40"
-                    aria-label="About Money Saved"
-                  >
-                    <Info size={13} strokeWidth={2.2} />
-                  </button>
-                </div>
-                <div className="flex items-end justify-between gap-[10px] mt-auto pt-[10px]">
-                  <div className="flex items-baseline gap-[6px]">
-                    <span className="text-[20px] font-bold text-[#059669] font-['Inter:Bold',sans-serif] leading-none">$</span>
-                    <span
-                      className="text-[40px] font-bold font-['Inter:Bold',sans-serif] leading-none"
-                      style={{ color: "#059669" }}
-                    >
-                      <KpiCounter value={saved} format={(n) => Math.round(n).toLocaleString()} />
-                    </span>
-                    {savedUplift > 0 && (
-                      <UpliftBadge text={`+$${Math.round(savedUplift).toLocaleString()}`} />
-                    )}
+              {/* ── 3. Holding Cost (total accruing — decreases as buckets resolve) ── */}
+              {(() => {
+                const hcStatus = holdingCost > 35_000
+                  ? { label: "High risk",     color: "#B91C1C", bg: "rgba(239,68,68,0.12)",  dot: "#B91C1C" }
+                  : holdingCost > 15_000
+                  ? { label: "Reducing",      color: "#92400E", bg: "rgba(245,158,11,0.14)", dot: "#D97706" }
+                  : { label: "Under control", color: "#047857", bg: "rgba(16,185,129,0.14)", dot: "#047857" };
+                const hcColor = holdingCost > 35_000 ? "#EF4444" : holdingCost > 15_000 ? "#D97706" : "#059669";
+                return (
+                  <div className="relative flex-1 rounded-[14px] border border-black/8 bg-white px-[18px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col">
+                    <KpiDelta value={holdingCost} direction="down-good" decimals={0} />
+                    <div className="flex items-center gap-[6px]">
+                      <span className="size-[8px] rounded-full" style={{ background: hcColor }} />
+                      <p className="text-[12px] font-semibold text-black/55 font-['Inter:Semi_Bold',sans-serif] uppercase tracking-[0.3px]">
+                        Holding Cost
+                      </p>
+                      <button
+                        type="button"
+                        title="Total holding cost accruing on vehicles with open issues. Drops as each bucket is resolved."
+                        className="ml-auto size-[18px] rounded-full hover:bg-black/5 flex items-center justify-center text-black/40"
+                        aria-label="About Holding Cost"
+                      >
+                        <MIcon name="info" size={15} />
+                      </button>
+                    </div>
+                    <div className="flex items-end justify-between gap-[10px] mt-auto pt-[10px]">
+                      <div className="flex items-baseline gap-[6px]">
+                        <span
+                          className="text-[20px] font-bold font-['Inter:Bold',sans-serif] leading-none"
+                          style={{ color: hcColor }}
+                        >$</span>
+                        <span
+                          className="text-[40px] font-bold font-['Inter:Bold',sans-serif] leading-none"
+                          style={{ color: hcColor }}
+                        >
+                          <KpiCounter value={holdingCost} format={(n) => Math.round(n).toLocaleString()} />
+                        </span>
+                        {holdingCostDrop > 0 && (
+                          <UpliftBadge text={`−$${Math.round(holdingCostDrop).toLocaleString()}`} />
+                        )}
+                      </div>
+                      <span
+                        className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10px] font-bold uppercase tracking-[0.5px] font-['Inter:Bold',sans-serif]"
+                        style={{ color: hcStatus.color, background: hcStatus.bg }}
+                      >
+                        <span className="size-[6px] rounded-full" style={{ background: hcStatus.dot }} />
+                        {hcStatus.label}
+                      </span>
+                    </div>
                   </div>
-                  <span className="inline-flex items-center gap-[5px] px-[8px] py-[3px] rounded-full text-[10px] font-bold uppercase tracking-[0.5px] font-['Inter:Bold',sans-serif] text-[#047857] bg-[rgba(16,185,129,0.14)]">
-                    <span className="size-[6px] rounded-full bg-[#047857]" />
-                    Recovering
-                  </span>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
             {/* Compact filter row — 5 mini bucket pills on the left,
@@ -453,9 +478,15 @@ export function Demo2Dashboard({
             <div data-fade className="flex items-center justify-between gap-[12px] mb-[14px]">
               <div className="flex items-center gap-[8px] flex-wrap">
                 {FILTER_CARDS.map((f) => {
-                  const state = buckets[f.key];
-                  const isActive = activeBucket === f.key;
-                  const isDone = state.completed;
+                  const isBucket = f.isBucket;
+                  const isActive = activeFilters.has(f.key);
+                  // Bucket chip: count from buckets prop + completed state.
+                  // Age chip: count of rows whose age clears the threshold.
+                  const bucketState = isBucket ? buckets[f.key as BucketKey] : undefined;
+                  const isDone = isBucket && bucketState ? bucketState.completed : false;
+                  const count = isBucket
+                    ? (bucketState ? bucketState.count : 0)
+                    : rows.filter((r) => r.age >= (f.key === "age45" ? 45 : 60)).length;
                   return (
                     <button
                       key={f.key}
@@ -470,15 +501,12 @@ export function Demo2Dashboard({
                       }`}
                     >
                       <span
-                        className="size-[20px] rounded-full flex items-center justify-center shrink-0"
+                        className="shrink-0 flex"
                         style={{
-                          background: isActive
-                            ? "rgba(255,255,255,0.22)"
-                            : isDone ? "rgba(16,185,129,0.16)" : `${f.color}18`,
                           color: isActive ? "#ffffff" : (isDone ? "#059669" : f.color),
                         }}
                       >
-                        <span className="scale-[0.7] flex">{f.icon}</span>
+                        <span className="scale-[0.78] flex">{f.icon}</span>
                       </span>
                       <span
                         className={`text-[11.5px] font-semibold font-['Inter:Semi_Bold',sans-serif] whitespace-nowrap ${
@@ -496,7 +524,7 @@ export function Demo2Dashboard({
                           color: isActive ? "#ffffff" : (isDone ? "#059669" : "#0a0a0a"),
                         }}
                       >
-                        {state.count}
+                        {count}
                       </span>
                     </button>
                   );
@@ -505,24 +533,24 @@ export function Demo2Dashboard({
 
               <div className="flex items-center gap-[6px] shrink-0">
                 <button className="inline-flex items-center gap-[5px] h-[30px] px-[10px] rounded-[8px] bg-white border border-black/10 text-[11.5px] font-medium text-black/70 hover:bg-[#fafafa]">
-                  <Eye size={12} /> View Input
+                  <MIcon name="visibility" size={14} /> View Input
                 </button>
                 <button className="inline-flex items-center gap-[5px] h-[30px] px-[10px] rounded-[8px] bg-white border border-black/10 text-[11.5px] font-medium text-black/70 hover:bg-[#fafafa]">
-                  <Download size={12} /> Export
+                  <MIcon name="download" size={14} /> Export
                 </button>
                 <button className="inline-flex items-center gap-[5px] h-[30px] px-[10px] rounded-[8px] bg-white border border-black/10 text-[11.5px] font-medium text-black/70 hover:bg-[#fafafa]">
-                  <Filter size={12} /> Filters
+                  <MIcon name="filter_alt" size={14} /> Filters
                 </button>
                 <button className="inline-flex items-center gap-[5px] h-[30px] px-[10px] rounded-[8px] bg-white border border-black/10 text-[11.5px] font-medium text-black/70 hover:bg-[#fafafa]">
-                  <CircleDot size={12} /> Sold
+                  <MIcon name="radio_button_unchecked" size={14} /> Sold
                 </button>
               </div>
             </div>
 
             {/* Vehicle table */}
-            <div data-fade className="bg-white rounded-[14px] border border-black/8 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div data-fade className="bg-white rounded-[14px] border border-black/8 overflow-clip shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <table className="w-full">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-[#F3F4F6]">
                   <tr className="border-b border-black/8 bg-[#F3F4F6]">
                     <th className="pl-4 pr-2 py-3 w-10 border-r border-black/5">
                       <input type="checkbox" className="w-4 h-4 rounded border-gray-300 accent-[#4600f2]" />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GripVertical, History, Sparkles } from "lucide-react";
+import { MIcon } from "./shared/MIcon";
 
 export type DashboardView = "before" | "current";
 
@@ -109,11 +109,11 @@ export function BeforeAfterToggle({ active, onChange }: Props) {
         className="h-[28px] w-[20px] flex items-center justify-center text-black/35 hover:text-black/70 rounded-full"
         style={{ cursor: dragging ? "grabbing" : "grab", touchAction: "none" }}
       >
-        <GripVertical size={14} />
+        <MIcon name="drag_indicator" size={16} />
       </div>
       {([
-        { id: "before",  label: "Before",  icon: <History size={13} strokeWidth={2.2} /> },
-        { id: "current", label: "Current", icon: <Sparkles size={13} strokeWidth={2.2} /> },
+        { id: "before",  label: "Before",  icon: <MIcon name="history" size={15} /> },
+        { id: "current", label: "Current", icon: <MIcon name="auto_awesome" size={15} /> },
       ] as const).map((opt) => {
         const isActive = opt.id === active;
         return (

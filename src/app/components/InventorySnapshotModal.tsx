@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Info } from "lucide-react";
 import imgRawExterior from "../assets/vehicle/raw-exterior-1.jpg";
 import imgCgiTransformed from "../assets/vehicle/cgi-transformed-front.jpg";
 
@@ -11,6 +11,8 @@ interface Props {
   noPhotos?: number;
   rawPhotos?: number;
   cgiPhotos?: number;
+  holdingCostPerDay?: number;
+  daysToList?: number;
   onStart?: () => void;
 }
 
@@ -67,11 +69,11 @@ function Gauge({ score }: { score: number }) {
 }
 
 function StatCard({
-  thumb, label, value, barColor, barPct, accent,
+  thumb, label, sublabel, value, barColor, barPct, accent,
 }: {
-  /** Real thumbnail image, or null for the "no photos" gray placeholder */
   thumb: string | null;
   label: string;
+  sublabel: string;
   value: number;
   barColor: string;
   barPct: number;
@@ -110,6 +112,9 @@ function StatCard({
             style={{ width: `${Math.min(100, barPct)}%`, backgroundColor: barColor }}
           />
         </div>
+        <p className="mt-[6px] text-[11px] font-medium font-['Inter:Medium',sans-serif]" style={{ color: accent }}>
+          {sublabel}
+        </p>
       </div>
     </div>
   );
@@ -122,10 +127,13 @@ export function InventorySnapshotModal({
   noPhotos = 90,
   rawPhotos = 67,
   cgiPhotos = 134,
+  holdingCostPerDay = 40,
+  daysToList = 12,
   onStart,
 }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -143,6 +151,8 @@ export function InventorySnapshotModal({
   if (!open) return null;
 
   const total = noPhotos + rawPhotos + cgiPhotos || 1;
+  const notReadyCount = noPhotos + rawPhotos;
+  const dailyCostAtRisk = notReadyCount * holdingCostPerDay;
 
   return (
     <div
@@ -153,49 +163,65 @@ export function InventorySnapshotModal({
         ref={panelRef}
         className="bg-white rounded-[20px] w-full max-w-[760px] max-h-[92vh] overflow-hidden flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
       >
-        {/* Header */}
-        <div className="flex items-start justify-between px-[28px] pt-[22px]">
-          <div className="flex items-start gap-[14px]">
-            <div className="shrink-0 size-[40px] rounded-full bg-[rgba(70,0,242,0.08)] flex items-center justify-center">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2l1.6 4.7L18.3 8l-3.6 3.4 1 4.9L12 14l-3.7 2.3 1-4.9L5.7 8l4.7-1.3L12 2z"
-                  fill="#4600F2"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-[20px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[26px]">
-                Your inventory snapshot
-              </h2>
-              <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
-                Every vehicle scored — here's where you stand.
-              </p>
-            </div>
+        {/* Header — title only, metrics moved into the score row for balance */}
+        <div className="flex items-start gap-[14px] px-[28px] pt-[22px]">
+          <div className="shrink-0 size-[40px] rounded-full bg-[rgba(70,0,242,0.08)] flex items-center justify-center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 2l1.6 4.7L18.3 8l-3.6 3.4 1 4.9L12 14l-3.7 2.3 1-4.9L5.7 8l4.7-1.3L12 2z"
+                fill="#4600F2"
+              />
+            </svg>
           </div>
-          <div className="shrink-0 text-right">
-            <p className="text-[11px] text-black/40 font-['Inter:Medium',sans-serif] font-medium">
-              Total Inventory:
-            </p>
-            <p className="text-[16px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif]">
-              {totalInventory}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-[20px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[26px]">
+              Your inventory snapshot
+            </h2>
+            <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
+              Every vehicle scored. Here is what it is costing your lot right now.
             </p>
           </div>
         </div>
 
-        {/* Score row */}
-        <div className="mx-[28px] mt-[20px] rounded-[14px] border border-black/5 bg-[#FAFAFB] px-[24px] py-[18px] flex items-center gap-[24px]">
-          <Gauge score={score} />
-          <div className="flex-1">
-            <p className="text-[18px] font-bold font-['Inter:Bold',sans-serif] text-[#0a0a0a]">
-              Inventory Score:{" "}
-              <span className="text-[#EF4444]">
+        {/* Score row + supporting metrics — single balanced card */}
+        <div className="mx-[28px] mt-[20px] rounded-[14px] border border-black/5 bg-[#FAFAFB] px-[24px] py-[18px]">
+          <div className="flex items-center gap-[24px]">
+            <Gauge score={score} />
+            <div className="flex-1">
+              <p className="text-[18px] font-bold font-['Inter:Bold',sans-serif] text-[#0a0a0a]">
+                Inventory Score:{" "}
+                <span className="text-[#EF4444]">
                 {score < 3 ? "Critical" : score < 4 ? "Needs Work" : "Healthy"}
               </span>
             </p>
             <p className="mt-[4px] text-[13px] text-black/55 font-['Inter:Regular',sans-serif]">
-              Most listings have placeholder or no media.
-            </p>
+                Most listings have low-quality or missing media. None are ready to compete online.
+              </p>
+          </div>
+          </div>
+
+          {/* Divider + supporting metrics row */}
+          <div className="mt-[16px] pt-[14px] border-t border-black/8 grid grid-cols-3 gap-[16px]">
+            <Metric label="Total Inventory" value={totalInventory.toLocaleString()} valueColor="#0a0a0a" />
+            <Metric label="Avg. time to list" value={`${daysToList} days`} valueColor="#F59E0B" />
+            <Metric
+              label="Daily cost at risk"
+              value={`$${dailyCostAtRisk.toLocaleString("en-US")} / day`}
+              valueColor="#EF4444"
+              tooltip={
+                <>
+                  {noPhotos} no-photo + {rawPhotos} raw-photo vehicles = {notReadyCount} not retail-ready
+                  <br />
+                  <span className="text-white/60">
+                    {notReadyCount} vehicles × ${holdingCostPerDay}/day ={" "}
+                    <span className="text-white font-semibold">${dailyCostAtRisk.toLocaleString("en-US")}/day</span>
+                  </span>
+                </>
+              }
+              tooltipVisible={tooltipVisible}
+              onTooltipShow={() => setTooltipVisible(true)}
+              onTooltipHide={() => setTooltipVisible(false)}
+            />
           </div>
         </div>
 
@@ -204,6 +230,7 @@ export function InventorySnapshotModal({
           <StatCard
             thumb={null}
             label="No Photos"
+            sublabel="Not listed anywhere"
             value={noPhotos}
             barColor="#EF4444"
             barPct={(noPhotos / total) * 100}
@@ -212,6 +239,7 @@ export function InventorySnapshotModal({
           <StatCard
             thumb={imgRawExterior}
             label="Raw Photos"
+            sublabel="Need studio treatment"
             value={rawPhotos}
             barColor="#F59E0B"
             barPct={(rawPhotos / total) * 100}
@@ -219,7 +247,8 @@ export function InventorySnapshotModal({
           />
           <StatCard
             thumb={imgCgiTransformed}
-            label="CGI / Stock"
+            label="Stock"
+            sublabel="Ready to upgrade"
             value={cgiPhotos}
             barColor="#7C3AED"
             barPct={(cgiPhotos / total) * 100}
@@ -238,10 +267,53 @@ export function InventorySnapshotModal({
               boxShadow: "0 6px 16px rgba(70,0,242,0.25)",
             }}
           >
-            Start Transforming
+            Fix my inventory
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Metric helper for the score row ─────────────────────────────────────────
+function Metric({
+  label, value, valueColor, tooltip, tooltipVisible, onTooltipShow, onTooltipHide,
+}: {
+  label: string;
+  value: string;
+  valueColor: string;
+  tooltip?: React.ReactNode;
+  tooltipVisible?: boolean;
+  onTooltipShow?: () => void;
+  onTooltipHide?: () => void;
+}) {
+  return (
+    <div className="relative">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.6px] text-black/45 font-['Inter:Semi_Bold',sans-serif] flex items-center gap-[4px]">
+        {label}
+        {tooltip && (
+          <button
+            type="button"
+            onMouseEnter={onTooltipShow}
+            onMouseLeave={onTooltipHide}
+            className="text-black/30 hover:text-black/60 transition-colors"
+            aria-label="How this is calculated"
+          >
+            <Info size={11} />
+          </button>
+        )}
+      </p>
+      <p className="mt-[3px] text-[16px] font-bold font-['Inter:Bold',sans-serif]" style={{ color: valueColor }}>
+        {value}
+      </p>
+      {tooltip && tooltipVisible && (
+        <div className="absolute left-0 top-full mt-[6px] z-10 w-[260px] rounded-[10px] bg-[#0a0a0a] text-white text-[11px] font-['Inter:Regular',sans-serif] px-[12px] py-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.25)] leading-[16px]">
+          {tooltip}
+          <div className="absolute left-[18px] -top-[5px] w-[10px] h-[5px] overflow-hidden">
+            <div className="w-[8px] h-[8px] bg-[#0a0a0a] rotate-45 translate-y-[3px] translate-x-[1px]" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

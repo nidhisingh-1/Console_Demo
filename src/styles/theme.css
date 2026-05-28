@@ -231,8 +231,40 @@
    The full cascading colour animation is driven by GSAP from Demo2Dashboard;
    this class is just a hook so we can target the row via [data-transforming]. */
 .demo2-transforming-row {
-  outline: 1px solid rgba(70,0,242,0.35);
+  outline: 1px solid rgba(16,185,129,0.40);
   outline-offset: -1px;
+}
+
+/* Demo 2 — center-of-dashboard "Applying X…" badge while a transform runs.
+   Soft entry + gentle float so it feels alive without distracting from the
+   table animation underneath. */
+@keyframes demo2-transform-overlay-in {
+  0%   { transform: translateY(8px) scale(0.96); opacity: 0; }
+  100% { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+@keyframes demo2-transform-overlay-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+.demo2-transform-overlay {
+  animation:
+    demo2-transform-overlay-in 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) backwards,
+    demo2-transform-overlay-float 2.4s ease-in-out 0.32s infinite;
+}
+
+/* Demo 2 — animated trailing dots ("…") after the overlay label. */
+@keyframes demo2-transform-dots {
+  0%   { content: "."; }
+  33%  { content: ".."; }
+  66%  { content: "..."; }
+  100% { content: "."; }
+}
+.demo2-transform-dots::after {
+  content: "...";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: demo2-transform-dots 1.2s steps(3, end) infinite;
 }
 
 /* Demo 2 — one-shot pop-in when a new state badge first mounts after a

@@ -444,9 +444,9 @@ export function DashboardScreen({
             </div>
 
             {/* Vehicle table */}
-            <div data-fade className="bg-white rounded-[14px] border border-black/8 overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+            <div data-fade className="bg-white rounded-[14px] border border-black/8 overflow-clip shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
               <table className="w-full">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-[#F3F4F6]">
                   <tr className="border-b border-black/8 bg-[#F3F4F6]">
                     <th className="pl-4 pr-2 py-3 w-10 border-r border-black/5">
                       <input type="checkbox" className="w-4 h-4 rounded border-gray-300 accent-[#4600f2]" />
