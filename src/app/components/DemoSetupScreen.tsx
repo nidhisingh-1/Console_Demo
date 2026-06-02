@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import {
-  Sparkles, ArrowRight, Camera, Clock, DollarSign,
-  ChevronDown, ChevronUp, Info,
+  Sparkles, ArrowRight, ArrowLeft, Minus, Plus, Check,
+  ChevronDown, ChevronUp, AlertCircle,
 } from "lucide-react";
 import { SpyneMark } from "./AppShell";
 import {
@@ -29,7 +29,6 @@ const PAIN_POINT_OPTIONS = [
   "Low VDP engagement", "Multi-rooftop consistency", "Promotions not showing",
 ];
 const SPEND_OPTIONS = ["Under $5K", "$5K-$10K", "$10K-$20K", "$20K-$50K", "Over $50K"];
-const HOLDING_COST_CHIPS = ["$40", "$43", "$46", "$50", "Custom"];
 
 const DISCOVERY_QUESTIONS = [
   "Which IMS are you currently integrated with?",
@@ -43,35 +42,49 @@ const DISCOVERY_QUESTIONS = [
   "What are the biggest bottlenecks in your current media workflow?",
 ];
 
-// ─── Small UI helpers ──────────────────────────────────────────────────────
+const STEPS = [
+  { key: 1, label: "Dealership profile", hint: "Who they are & how big" },
+  { key: 2, label: "Performance & spend", hint: "Where the gaps are today" },
+] as const;
 
-function Req() {
+// ─── Small UI atoms ────────────────────────────────────────────────────────
+
+function ReqBadge({ kind = "required" }: { kind?: "required" | "editable" }) {
+  if (kind === "editable") {
+    return (
+      <span className="inline-flex items-center px-[7px] h-[18px] rounded-md text-[9px] font-bold uppercase tracking-[0.6px] bg-black/6 text-black/55 font-['Inter:Bold',sans-serif]">
+        Editable
+      </span>
+    );
+  }
   return (
-    <span className="ml-[4px] px-[5px] py-[1px] rounded text-[8px] font-bold uppercase tracking-[0.4px] bg-[#EF4444]/10 text-[#EF4444] font-['Inter:Bold',sans-serif]">
+    <span className="inline-flex items-center px-[7px] h-[18px] rounded-md text-[9px] font-bold uppercase tracking-[0.6px] bg-[#FEF3C7] text-[#B45309] font-['Inter:Bold',sans-serif]">
       Required
     </span>
   );
 }
 
 function FieldLabel({
-  children, required, hint,
+  children, required, error,
 }: {
   children: React.ReactNode;
   required?: boolean;
-  hint?: string;
+  error?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-[4px] mb-[7px]">
-      <span className="text-[10px] uppercase tracking-[0.6px] font-bold text-black/50 font-['Inter:Bold',sans-serif]">
-        {children}
-      </span>
-      {required && <Req />}
-      {hint && (
-        <span className="group relative inline-flex ml-[2px]">
-          <Info size={11} className="text-black/30" />
-          <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-[6px] hidden group-hover:block bg-[#0a0a0a] text-white text-[10px] px-[6px] py-[3px] rounded whitespace-nowrap z-10 pointer-events-none font-['Inter:Regular',sans-serif]">
-            {hint}
-          </span>
+    <div className="text-[12px] font-semibold text-black/70 mb-[8px] font-['Inter:Semi_Bold',sans-serif] flex items-center gap-[5px]">
+      <span>{children}</span>
+      {required && (
+        <span
+          className={`font-bold ${error ? "text-[#EF4444]" : "text-[#B45309]"}`}
+          aria-label="required"
+        >
+          *
+        </span>
+      )}
+      {error && (
+        <span className="text-[10px] font-semibold text-[#EF4444] font-['Inter:Semi_Bold',sans-serif]">
+          Required
         </span>
       )}
     </div>
@@ -92,10 +105,10 @@ function ChipGroup({
           key={opt}
           type="button"
           onClick={() => onChange(value === opt ? "" : opt)}
-          className={`h-[26px] px-[9px] rounded-full text-[10px] font-semibold border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
+          className={`h-[30px] px-[12px] rounded-full text-[11px] font-semibold border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
             value === opt
               ? "bg-[#4600F2] text-white border-[#4600F2]"
-              : "bg-white text-black/60 border-black/15 hover:border-[#4600F2]/40"
+              : "bg-white text-black/65 border-black/15 hover:border-[#4600F2]/40"
           }`}
         >
           {opt}
@@ -121,10 +134,10 @@ function MultiChipGroup({
           key={opt}
           type="button"
           onClick={() => toggle(opt)}
-          className={`h-[26px] px-[9px] rounded-full text-[10px] font-semibold border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
+          className={`h-[30px] px-[12px] rounded-full text-[11px] font-semibold border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
             values.includes(opt)
               ? "bg-[#4600F2] text-white border-[#4600F2]"
-              : "bg-white text-black/60 border-black/15 hover:border-[#4600F2]/40"
+              : "bg-white text-black/65 border-black/15 hover:border-[#4600F2]/40"
           }`}
         >
           {opt}
@@ -134,47 +147,67 @@ function MultiChipGroup({
   );
 }
 
-// Left panel section wrapper
-function PanelSection({
-  title, children, last,
-}: {
-  title: string;
-  children: React.ReactNode;
-  last?: boolean;
-}) {
-  return (
-    <div className={`px-[20px] py-[16px] ${last ? "" : "border-b border-black/8"}`}>
-      <p className="text-[9px] font-bold uppercase tracking-[1.2px] text-[#4600F2]/60 mb-[13px] font-['Inter:Bold',sans-serif]">
-        {title}
-      </p>
-      <div className="space-y-[13px]">{children}</div>
-    </div>
-  );
-}
+// ─── MetricCard: big number + +/- stepper + slider + benchmark line ───────
 
-// ─── Slider ───────────────────────────────────────────────────────────────
-
-function Slider({
-  label, value, min, max, step = 1, format, benchmark, required, onChange,
+function MetricCard({
+  label, value, suffix, prefix, min, max, step = 1, onChange, badge = "required",
+  benchmarkLabel, benchmarkValue,
 }: {
   label: string;
   value: number;
+  suffix?: string;
+  prefix?: string;
   min: number;
   max: number;
   step?: number;
-  format: (v: number) => string;
-  benchmark?: string;
-  required?: boolean;
   onChange: (v: number) => void;
+  badge?: "required" | "editable";
+  benchmarkLabel?: string;
+  benchmarkValue?: string;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
-    <div>
-      <div className="flex items-center justify-between mb-[8px]">
-        <FieldLabel required={required}>{label}</FieldLabel>
-        <span className="text-[18px] font-bold text-[#4600F2] font-['Inter:Bold',sans-serif] leading-none">
-          {format(value)}
-        </span>
+    <div className="rounded-[14px] border border-black/8 bg-white p-[16px]">
+      <div className="flex items-start justify-between gap-[12px] mb-[10px]">
+        <p className="text-[12px] font-semibold text-black/70 font-['Inter:Semi_Bold',sans-serif]">
+          {label}
+        </p>
+        <ReqBadge kind={badge} />
+      </div>
+      <div className="flex items-end justify-between gap-[10px] mb-[12px]">
+        <div className="flex items-baseline gap-[3px]">
+          {prefix && (
+            <span className="text-[18px] font-bold text-black/40 font-['Inter:Bold',sans-serif]">
+              {prefix}
+            </span>
+          )}
+          <span className="text-[28px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-none">
+            {value.toLocaleString()}
+          </span>
+          {suffix && (
+            <span className="text-[12px] font-semibold text-black/40 ml-[3px] font-['Inter:Semi_Bold',sans-serif]">
+              {suffix}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-[6px]">
+          <button
+            type="button"
+            onClick={() => onChange(Math.max(min, value - step))}
+            className="size-[26px] rounded-md border border-black/12 flex items-center justify-center text-black/55 hover:border-[#4600F2] hover:text-[#4600F2] transition-colors"
+            aria-label="decrement"
+          >
+            <Minus size={12} strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange(Math.min(max, value + step))}
+            className="size-[26px] rounded-md border border-black/12 flex items-center justify-center text-black/55 hover:border-[#4600F2] hover:text-[#4600F2] transition-colors"
+            aria-label="increment"
+          >
+            <Plus size={12} strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
       <input
         type="range"
@@ -188,113 +221,56 @@ function Slider({
           background: `linear-gradient(to right, #4600F2 ${pct}%, #E5E7EB ${pct}%)`,
         }}
       />
-      <div className="flex justify-between mt-[5px]">
-        <span className="text-[9px] text-black/30 font-['Inter:Regular',sans-serif]">{format(min)}</span>
-        <span className="text-[9px] text-black/30 font-['Inter:Regular',sans-serif]">{format(max)}+</span>
-      </div>
-      {benchmark && (
-        <p className="mt-[4px] text-[10px] text-black/40 font-['Inter:Regular',sans-serif]">{benchmark}</p>
-      )}
-    </div>
-  );
-}
-
-// ─── Stat box (right panel header) ────────────────────────────────────────
-
-function StatBox({
-  label, value, sub, variant,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  variant: "neutral" | "alert" | "accent" | "warn";
-}) {
-  const styles = {
-    neutral: {
-      wrap: "bg-white border-black/10",
-      label: "text-black/40",
-      value: "text-[#0a0a0a]",
-    },
-    alert: {
-      wrap: "bg-[#FEF2F2] border-[#EF4444]/25",
-      label: "text-[#EF4444]/70",
-      value: "text-[#EF4444]",
-    },
-    accent: {
-      wrap: "bg-[#F4F0FF] border-[#4600F2]/20",
-      label: "text-[#4600F2]/70",
-      value: "text-[#4600F2]",
-    },
-    warn: {
-      wrap: "bg-[#FFFBEB] border-[#F59E0B]/30",
-      label: "text-[#B45309]/80",
-      value: "text-[#B45309]",
-    },
-  };
-  const s = styles[variant];
-  return (
-    <div className={`flex-1 rounded-[14px] border p-[14px] ${s.wrap}`}>
-      <p className={`text-[9px] font-bold uppercase tracking-[0.6px] mb-[6px] ${s.label} font-['Inter:Bold',sans-serif]`}>
-        {label}
-      </p>
-      <p className={`text-[22px] font-bold leading-none ${s.value} font-['Inter:Bold',sans-serif]`}>
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-[4px] text-[10px] text-black/35 font-['Inter:Regular',sans-serif]">{sub}</p>
-      )}
-    </div>
-  );
-}
-
-// ─── Impact card ───────────────────────────────────────────────────────────
-
-function ImpactCard({
-  icon, label, value, sub, accent,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub: string;
-  accent: string;
-}) {
-  return (
-    <div
-      className="flex-1 rounded-[14px] p-[16px] border"
-      style={{ borderColor: `${accent}30`, background: `${accent}08` }}
-    >
-      <div className="flex items-center gap-[8px] mb-[10px]">
-        <div
-          className="size-[28px] rounded-[8px] flex items-center justify-center shrink-0"
-          style={{ background: `${accent}18`, color: accent }}
-        >
-          {icon}
+      {benchmarkLabel && (
+        <div className="mt-[8px] flex items-center justify-between text-[11px] font-['Inter:Regular',sans-serif]">
+          <span className="inline-flex items-center gap-[5px] text-black/50">
+            <span className="size-[6px] rounded-full bg-[#10B981]" />
+            {benchmarkLabel}
+          </span>
+          {benchmarkValue && (
+            <span className="text-[#10B981] font-semibold font-['Inter:Semi_Bold',sans-serif]">
+              {benchmarkValue}
+            </span>
+          )}
         </div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-black/50 font-['Inter:Semi_Bold',sans-serif]">
-          {label}
-        </p>
-      </div>
-      <p
-        className="text-[22px] font-bold font-['Inter:Bold',sans-serif] leading-none"
-        style={{ color: accent }}
-      >
-        {value}
-        <span className="text-[11px] font-medium text-black/40 ml-[4px]">/mo</span>
-      </p>
-      <p className="mt-[4px] text-[11px] text-black/55 font-['Inter:Regular',sans-serif] leading-[14px]">
-        {sub}
-      </p>
+      )}
     </div>
   );
 }
 
-// ─── Right panel section label ─────────────────────────────────────────────
+// ─── Card wrapper for each section in the right column ────────────────────
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function SectionCard({
+  eyebrow, title, badge, badgeKind, hint, children,
+}: {
+  eyebrow: string;
+  title: string;
+  badge?: boolean;
+  badgeKind?: "required" | "editable";
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <p className="text-[10px] font-bold uppercase tracking-[0.8px] text-black/40 mb-[10px] font-['Inter:Bold',sans-serif]">
+    <div className="bg-white rounded-[16px] border border-black/8 p-[20px]">
+      <div className="flex items-start justify-between mb-[16px] gap-[12px]">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[1px] text-black/40 mb-[2px] font-['Inter:Bold',sans-serif]">
+            {eyebrow}
+          </p>
+          <h3 className="text-[16px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif]">
+            {title}
+          </h3>
+        </div>
+        {badge ? (
+          <ReqBadge kind={badgeKind} />
+        ) : hint ? (
+          <p className="text-[11px] text-black/40 font-['Inter:Regular',sans-serif] text-right max-w-[220px]">
+            {hint}
+          </p>
+        ) : null}
+      </div>
       {children}
-    </p>
+    </div>
   );
 }
 
@@ -306,38 +282,79 @@ interface Props {
 
 export function DemoSetupScreen({ onLaunch }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const stepBodyRef = useRef<HTMLDivElement>(null);
   const [config, setConfig] = useState<DemoConfig>(DEFAULT_DEMO_CONFIG);
-  const [showBreakdown, setShowBreakdown] = useState(false);
-  const [showDiscovery, setShowDiscovery] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [showDiscoveryQs, setShowDiscoveryQs] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const set = <K extends keyof DemoConfig>(key: K, value: DemoConfig[K]) =>
     setConfig((prev) => ({ ...prev, [key]: value }));
 
   const opp = calcOpportunity(config);
 
-  // Holding cost chip handler — syncs both chip label and numeric value
-  const setHoldingCostChip = (chip: string) => {
-    set("holdingCostChip", chip);
-    if (chip !== "Custom") {
-      set("holdingCostPerDay", parseInt(chip.replace("$", ""), 10));
-    }
+  // Per-step required-field tracking
+  const step1Missing = {
+    dealershipName: !config.dealershipName.trim(),
+    numRooftops: !config.numRooftops,
   };
+  const step2Missing = {
+    daysToLiveChip: !config.daysToLiveChip,
+    photographyProcess: !config.photographyProcess,
+    painPoints: config.painPoints.length === 0,
+  };
+  const step1MissingList = [
+    step1Missing.dealershipName && "Dealership name",
+    step1Missing.numRooftops && "Number of rooftops",
+  ].filter(Boolean) as string[];
+  const step2MissingList = [
+    step2Missing.daysToLiveChip && "Avg days to listing go-live",
+    step2Missing.photographyProcess && "Current photography process",
+    step2Missing.painPoints && "Biggest pain points",
+  ].filter(Boolean) as string[];
 
-  // GSAP entrance
+  const step1Valid = step1MissingList.length === 0;
+  const step2Valid = step2MissingList.length === 0;
+  const allValid = step1Valid && step2Valid;
+  const canAdvance = step === 1 ? step1Valid : step2Valid;
+  const currentMissingList = step === 1 ? step1MissingList : step2MissingList;
+
+  // Mount entrance
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const items = el.querySelectorAll<HTMLElement>("[data-fade]");
     gsap.fromTo(
       items,
-      { y: 14, opacity: 0 },
+      { y: 16, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.45, stagger: 0.05, ease: "power3.out" }
     );
   }, []);
 
+  // Step content fade on change
+  useEffect(() => {
+    const el = stepBodyRef.current;
+    if (!el) return;
+    const items = el.querySelectorAll<HTMLElement>("[data-step-fade]");
+    gsap.fromTo(
+      items,
+      { y: 12, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, stagger: 0.05, ease: "power3.out" }
+    );
+    setShowErrors(false);
+  }, [step]);
+
+  const requiredFilledCount =
+    (config.dealershipName.trim() ? 1 : 0) +
+    (config.numRooftops ? 1 : 0) +
+    (config.totalInventory > 0 ? 1 : 0) +
+    (config.daysToLiveChip ? 1 : 0) +
+    (config.photographyProcess ? 1 : 0) +
+    (config.painPoints.length > 0 ? 1 : 0);
+
   return (
-    <div className="min-h-screen bg-[#F5F3FF] flex flex-col">
-      {/* Top bar */}
+    <div ref={containerRef} className="h-screen bg-[#f9fafb] flex flex-col">
+      {/* Top app bar */}
       <div className="bg-white border-b border-black/8 h-[52px] flex items-center justify-between px-[28px] shrink-0">
         <div className="flex items-center gap-[10px]">
           <SpyneMark />
@@ -353,237 +370,148 @@ export function DemoSetupScreen({ onLaunch }: Props) {
         </p>
       </div>
 
-      <div ref={containerRef} className="flex flex-1 min-h-0 overflow-hidden">
+      {/* Content area */}
+      <div className="flex-1 min-h-0 w-full max-w-[1280px] mx-auto px-[28px] pt-[24px] flex flex-col">
 
-        {/* ── LEFT: Discovery panel ────────────────────────────────────── */}
-        <div className="w-[340px] shrink-0 bg-white border-r border-black/8 flex flex-col min-h-0">
-          {/* Sticky header */}
-          <div className="shrink-0 px-[20px] py-[14px] border-b border-black/8 bg-white">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#4600F2] font-['Inter:Bold',sans-serif]">
-              Discovery Inputs
+        {/* ── PAGE HEADER ─────────────────────────────────────────────── */}
+        <div data-fade className="mb-[20px] flex items-center justify-between gap-[16px] flex-wrap">
+          <div>
+            <p className="inline-flex items-center gap-[6px] text-[10px] font-bold uppercase tracking-[1.2px] text-black/45 font-['Inter:Bold',sans-serif] mb-[6px]">
+              <span className="size-[5px] rounded-full bg-[#FF5C7A]" />
+              Demo builder · Discovery
             </p>
-            <p className="mt-[3px] text-[11px] text-black/45 font-['Inter:Regular',sans-serif]">
-              AE intake — fields marked <span className="font-semibold text-[#EF4444]">Required</span> are needed to launch
+            <h1 className="text-[#0a0a0a] text-[22px] font-bold font-['Inter:Bold',sans-serif] leading-[1.15]">
+              Build a custom demo
+            </h1>
+            <p className="mt-[4px] text-[12px] text-black/50 font-['Inter:Regular',sans-serif] inline-flex items-center gap-[8px] flex-wrap">
+              Live updates as you fill the form
+              <span className="px-[8px] py-[3px] rounded-full bg-[#4600F2]/8 text-[#4600F2] text-[10px] font-bold font-['Inter:Bold',sans-serif] uppercase tracking-[0.4px]">
+                {requiredFilledCount}/6 required filled
+              </span>
             </p>
           </div>
+        </div>
 
-          {/* Scrolling body */}
-          <div className="flex-1 overflow-auto">
+        {/* ── BODY GRID ─────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-[20px] flex-1 min-h-0 pb-[20px]">
 
-          {/* Section 1: Account Details */}
-          <PanelSection title="Account Details">
-            <div data-fade>
-              <FieldLabel>AE Name</FieldLabel>
-              <input
-                type="text"
-                placeholder="Enter AE name"
-                value={config.aeName}
-                onChange={(e) => set("aeName", e.target.value)}
-                className="w-full h-[34px] px-[10px] rounded-[8px] border border-black/15 bg-[#FAFAFA] text-[13px] text-[#0a0a0a] outline-none focus:border-[#4600F2] font-['Inter:Regular',sans-serif] placeholder:text-black/30"
-              />
-            </div>
+          {/* ── LEFT SIDEBAR (persistent — does not scroll the page) ─── */}
+          <div data-fade className="bg-white rounded-[16px] border border-black/8 p-[20px] overflow-y-auto min-h-0">
+            <p className="text-[10px] font-bold uppercase tracking-[1px] text-black/40 mb-[3px] font-['Inter:Bold',sans-serif]">
+              Discovery
+            </p>
+            <h2 className="text-[16px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] mb-[18px]">
+              Customer details
+            </h2>
 
-            <div data-fade>
-              <FieldLabel>Dealership Name</FieldLabel>
-              <input
-                type="text"
-                placeholder="e.g. Valley Toyota"
-                value={config.dealershipName}
-                onChange={(e) => set("dealershipName", e.target.value)}
-                className="w-full h-[34px] px-[10px] rounded-[8px] border border-black/15 bg-[#FAFAFA] text-[13px] text-[#0a0a0a] outline-none focus:border-[#4600F2] font-['Inter:Regular',sans-serif] placeholder:text-black/30"
-              />
-            </div>
+            <FieldLabel>AE Name</FieldLabel>
+            <input
+              type="text"
+              placeholder="Enter AE name"
+              value={config.aeName}
+              onChange={(e) => set("aeName", e.target.value)}
+              className="w-full h-[38px] px-[12px] mb-[14px] rounded-[10px] border border-black/12 bg-white text-[13px] text-[#0a0a0a] outline-none focus:border-[#4600F2] font-['Inter:Regular',sans-serif] placeholder:text-black/30"
+            />
 
-            <div data-fade>
-              <FieldLabel>IMS Provider</FieldLabel>
-              <ChipGroup
-                options={IMS_OPTIONS}
-                value={config.imsProvider}
-                onChange={(v) => set("imsProvider", v)}
-              />
-            </div>
-          </PanelSection>
+            <FieldLabel required error={showErrors && step === 1 && step1Missing.dealershipName}>
+              Dealership Name
+            </FieldLabel>
+            <input
+              type="text"
+              placeholder="Enter dealership name"
+              value={config.dealershipName}
+              onChange={(e) => set("dealershipName", e.target.value)}
+              className={`w-full h-[38px] px-[12px] mb-[14px] rounded-[10px] border bg-white text-[13px] text-[#0a0a0a] outline-none font-['Inter:Regular',sans-serif] placeholder:text-black/30 transition-colors ${
+                showErrors && step === 1 && step1Missing.dealershipName
+                  ? "border-[#EF4444] focus:border-[#EF4444]"
+                  : "border-black/12 focus:border-[#4600F2]"
+              }`}
+            />
 
-          {/* Section 2: Dealership Profile */}
-          <PanelSection title="Dealership Profile">
-            <div data-fade>
-              <FieldLabel>Number of Rooftops</FieldLabel>
-              <ChipGroup
-                options={ROOFTOP_OPTIONS}
-                value={config.numRooftops}
-                onChange={(v) => set("numRooftops", v)}
-              />
-            </div>
-
-            <div data-fade>
-              <FieldLabel>Inventory Mix</FieldLabel>
-              <ChipGroup
-                options={INVENTORY_MIX_OPTIONS}
-                value={config.inventoryMix}
-                onChange={(v) => set("inventoryMix", v)}
-              />
-            </div>
-
-            <div data-fade>
-              <Slider
-                label="Units on Lot"
-                value={config.totalInventory}
-                min={50}
-                max={2000}
-                step={10}
-                format={(v) => `${v}`}
-                required
-                benchmark="Avg. active inventory at any given time across all rooftops"
-                onChange={(v) => set("totalInventory", v)}
-              />
-            </div>
-          </PanelSection>
-
-          {/* Section 3: Current Process */}
-          <PanelSection title="Current Process">
-            <div data-fade>
-              <FieldLabel
-                required
-                hint="Drives the frontline gap cost in the financial model"
-              >
-                Avg Days from Acquisition to Listing Go-Live
-              </FieldLabel>
-              <ChipGroup
-                options={DAYS_TO_LIVE_OPTIONS}
-                value={config.daysToLiveChip}
-                onChange={(v) => set("daysToLiveChip", v)}
-              />
-              {config.daysToLiveChip && (
-                <p className="mt-[6px] text-[10px] text-[#4600F2]/70 font-['Inter:Regular',sans-serif]">
-                  Studio AI target: 1 day &rarr; saves{" "}
-                  <span className="font-bold">
-                    {opp.frontlineGapDays} days x ${config.holdingCostPerDay} x{" "}
-                    {config.monthlySalesVolume} units/mo
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div data-fade>
-              <FieldLabel
-                required
-                hint="Estimates % of inventory without photos for media gap calculation"
-              >
-                Current Photography Process
-              </FieldLabel>
-              <ChipGroup
-                options={PHOTO_PROCESS_OPTIONS}
-                value={config.photographyProcess}
-                onChange={(v) => set("photographyProcess", v)}
-              />
-              {config.photographyProcess && (
-                <p className="mt-[6px] text-[10px] text-black/45 font-['Inter:Regular',sans-serif]">
-                  Est.{" "}
-                  <span className="font-semibold text-[#EF4444]">
-                    ~{PHOTO_PROCESS_GAP_MAP[config.photographyProcess]}%
-                  </span>{" "}
-                  of inventory without photos
-                </p>
-              )}
-            </div>
-
-            <div data-fade>
-              <FieldLabel>Media Formats Currently Produced</FieldLabel>
-              <MultiChipGroup
-                options={MEDIA_FORMAT_OPTIONS}
-                values={config.mediaFormats}
-                onChange={(v) => set("mediaFormats", v)}
-              />
-            </div>
-          </PanelSection>
-
-          {/* Section 4: Pain Points & Spend */}
-          <PanelSection title="Pain Points & Spend" last>
-            <div data-fade>
-              <FieldLabel required>Biggest Pain Points</FieldLabel>
-              <MultiChipGroup
-                options={PAIN_POINT_OPTIONS}
-                values={config.painPoints}
-                onChange={(v) => set("painPoints", v)}
-              />
-            </div>
-
-            {/* Photography spend — two input modes, fill either one */}
-            <div data-fade className="rounded-[10px] border border-black/8 bg-[#FAFAFA] p-[12px] space-y-[10px]">
-              <div>
-                <FieldLabel hint="Common for vendors charging per shoot. Industry baseline: $15-$25/VIN.">
-                  Cost per VIN
-                </FieldLabel>
-                <div className="flex items-center h-[30px] bg-white rounded-[8px] px-[9px] border border-black/12 focus-within:border-[#4600F2] w-[120px]">
-                  <span className="text-[12px] text-black/50 font-semibold mr-[2px]">$</span>
-                  <input
-                    type="number"
-                    value={config.perVinCost}
-                    onChange={(e) => set("perVinCost", Number(e.target.value) || 0)}
-                    className="flex-1 bg-transparent outline-none text-[13px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] min-w-0"
-                  />
-                  <span className="text-[10px] text-black/35 ml-[2px]">/ car</span>
-                </div>
-                {config.perVinCost > 0 && (
-                  <p className="mt-[5px] text-[10px] text-black/40 font-['Inter:Regular',sans-serif]">
-                    At {config.totalInventory} units: est.{" "}
-                    <span className="font-semibold text-black/60">
-                      ${(config.perVinCost * config.totalInventory).toLocaleString()}/mo
-                    </span>{" "}
-                    in photography costs
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-[8px]">
-                <div className="flex-1 h-px bg-black/8" />
-                <span className="text-[9px] font-bold uppercase tracking-[0.6px] text-black/30 font-['Inter:Bold',sans-serif]">or</span>
-                <div className="flex-1 h-px bg-black/8" />
-              </div>
-
-              <div>
-                <FieldLabel hint="Total monthly outlay including vendor fees, labour, and editing">
-                  Monthly Photography Spend
-                </FieldLabel>
-                <div className="flex flex-wrap gap-[6px]">
-                  {SPEND_OPTIONS.map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() =>
-                        set("monthlyPhotographySpend", config.monthlyPhotographySpend === opt ? "" : opt)
-                      }
-                      className={`h-[26px] px-[9px] rounded-full text-[10px] font-semibold border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
-                        config.monthlyPhotographySpend === opt
-                          ? "bg-[#4600F2] text-white border-[#4600F2]"
-                          : "bg-white text-black/60 border-black/15 hover:border-[#4600F2]/40"
+            <FieldLabel>Inventory Mix</FieldLabel>
+            <div className="grid grid-cols-2 gap-[8px] mb-[8px]">
+              {INVENTORY_MIX_OPTIONS.slice(0, 2).map((opt) => {
+                const isActive = config.inventoryMix === opt;
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => set("inventoryMix", isActive ? "" : opt)}
+                    className={`rounded-[10px] border p-[10px] text-left transition-colors ${
+                      isActive
+                        ? "border-[#4600F2] bg-[#4600F2]/5"
+                        : "border-black/12 bg-white hover:border-[#4600F2]/40"
+                    }`}
+                  >
+                    <p
+                      className={`text-[12px] font-bold font-['Inter:Bold',sans-serif] ${
+                        isActive ? "text-[#4600F2]" : "text-[#0a0a0a]"
                       }`}
                     >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      {opt === "New only" ? "New" : "Used"}
+                    </p>
+                    <p className="text-[10px] text-black/45 font-['Inter:Regular',sans-serif] mt-[1px]">
+                      {opt === "New only" ? "$45,000 per car" : "$27,000 per car"}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
+            <button
+              type="button"
+              onClick={() =>
+                set(
+                  "inventoryMix",
+                  config.inventoryMix === INVENTORY_MIX_OPTIONS[2] ? "" : INVENTORY_MIX_OPTIONS[2]
+                )
+              }
+              className={`w-full rounded-[10px] border h-[34px] text-[11px] font-semibold font-['Inter:Semi_Bold',sans-serif] transition-colors mb-[16px] ${
+                config.inventoryMix === INVENTORY_MIX_OPTIONS[2]
+                  ? "border-[#4600F2] bg-[#4600F2]/5 text-[#4600F2]"
+                  : "border-black/12 text-black/60 hover:border-[#4600F2]/40"
+              }`}
+            >
+              Both New &amp; Used
+            </button>
 
-            {/* Discovery questions (collapsible) */}
-            <div data-fade>
+            <FieldLabel>IMS / DMS</FieldLabel>
+            <ChipGroup
+              options={IMS_OPTIONS}
+              value={config.imsProvider}
+              onChange={(v) => set("imsProvider", v)}
+            />
+
+            {/* Discovery questions — collapsed by default */}
+            <div className="mt-[20px] pt-[18px] border-t border-black/8">
               <button
                 type="button"
-                onClick={() => setShowDiscovery((v) => !v)}
-                className="inline-flex items-center gap-[5px] text-[10px] font-semibold text-black/45 hover:text-[#4600F2] transition-colors font-['Inter:Semi_Bold',sans-serif]"
+                onClick={() => setShowDiscoveryQs((v) => !v)}
+                className="w-full flex items-center justify-between gap-[8px] group"
               >
-                {showDiscovery ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                {showDiscovery ? "Hide" : "Show"} discovery script
+                <span className="inline-flex items-center gap-[8px]">
+                  <span className="text-[10px] font-bold uppercase tracking-[1px] text-black/40 font-['Inter:Bold',sans-serif] group-hover:text-[#4600F2] transition-colors">
+                    Discovery Questions
+                  </span>
+                  <span className="px-[6px] py-[1px] rounded-full bg-black/5 text-[9px] font-bold text-black/45 font-['Inter:Bold',sans-serif]">
+                    {DISCOVERY_QUESTIONS.length}
+                  </span>
+                </span>
+                <span className="text-black/35 group-hover:text-[#4600F2] transition-colors">
+                  {showDiscoveryQs ? (
+                    <ChevronUp size={14} strokeWidth={2.5} />
+                  ) : (
+                    <ChevronDown size={14} strokeWidth={2.5} />
+                  )}
+                </span>
               </button>
-              {showDiscovery && (
-                <ol className="mt-[10px] space-y-[8px]">
+              {showDiscoveryQs && (
+                <ol className="mt-[12px] space-y-[10px]">
                   {DISCOVERY_QUESTIONS.map((q, i) => (
-                    <li key={i} className="flex gap-[8px]">
-                      <span className="shrink-0 size-[17px] rounded-full bg-[rgba(70,0,242,0.08)] text-[9px] font-bold text-[#4600F2] flex items-center justify-center mt-[1px] font-['Inter:Bold',sans-serif]">
+                    <li key={i} className="flex gap-[10px]">
+                      <span className="shrink-0 size-[18px] rounded-full bg-[rgba(70,0,242,0.08)] text-[9px] font-bold text-[#4600F2] flex items-center justify-center mt-[1px] font-['Inter:Bold',sans-serif]">
                         {i + 1}
                       </span>
-                      <p className="text-[10px] text-black/65 font-['Inter:Regular',sans-serif] leading-[14px]">
+                      <p className="text-[11px] text-black/65 font-['Inter:Regular',sans-serif] leading-[15px]">
                         {q}
                       </p>
                     </li>
@@ -591,303 +519,433 @@ export function DemoSetupScreen({ onLaunch }: Props) {
                 </ol>
               )}
             </div>
-          </PanelSection>
           </div>
-        </div>
 
-        {/* ── RIGHT: Opportunity model ──────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-h-0">
+          {/* ── RIGHT STEP CONTENT ─────────────────────────────────────── */}
+          <div ref={stepBodyRef} className="min-w-0 min-h-0 overflow-y-auto pr-[4px]">
 
-          {/* ── STICKY TOP: Impact summary ─── */}
-          {(() => {
-            const turnRate = config.totalInventory > 0
-              ? config.monthlySalesVolume / config.totalInventory
-              : 0;
-            const turnVariant: "accent" | "warn" | "alert" =
-              turnRate >= 1.4 ? "accent" : turnRate >= 0.8 ? "warn" : "alert";
-            const turnSub =
-              turnRate >= 1.4
-                ? "On track. Target: 1.6-2.0x"
-                : turnRate >= 0.8
-                ? "Below target. Target: 1.6-2.0x"
-                : "Critical. Target: 1.6-2.0x";
-            return (
-              <div className="shrink-0 bg-white border-b border-black/8 px-[28px] pt-[16px] pb-[18px]">
-                <div className="flex items-center justify-between mb-[10px]">
-                  <p className="text-[10px] font-bold uppercase tracking-[1px] text-black/45 font-['Inter:Bold',sans-serif]">
-                    Impact Snapshot
-                  </p>
-                  <p className="text-[10px] text-black/35 font-['Inter:Regular',sans-serif]">
-                    Updates live as you tweak inputs
-                  </p>
-                </div>
-                <div data-fade className="flex gap-[10px]">
-                  <StatBox
-                    label="Total Vehicles"
-                    value={`${config.totalInventory}`}
-                    sub="units on lot"
-                    variant="neutral"
-                  />
-                  <StatBox
-                    label="Monthly Sales"
-                    value={`${config.monthlySalesVolume}`}
-                    sub="units sold / mo"
-                    variant="accent"
-                  />
-                  <StatBox
-                    label="Inventory Turn Rate"
-                    value={`${turnRate.toFixed(1)}x`}
-                    sub={turnSub}
-                    variant={turnVariant}
-                  />
-                  <StatBox
-                    label="Est. Monthly Gap"
-                    value={`$${opp.totalMonthly.toLocaleString("en-US", { maximumFractionDigits: 0 })}`}
-                    sub="across all three cost buckets"
-                    variant="alert"
-                  />
-                </div>
-              </div>
-            );
-          })()}
+            {/* Step progress header */}
+            <div className="mb-[12px] flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-black/40 font-['Inter:Bold',sans-serif]">
+                Setup progress
+              </p>
+              <span className="text-[10px] font-bold text-black/55 font-['Inter:Bold',sans-serif]">
+                Step {step} of {STEPS.length}
+              </span>
+            </div>
 
-          {/* ── SCROLLING MIDDLE: inputs + breakdown ─── */}
-          <div className="flex-1 overflow-auto">
-          <div className="px-[28px] py-[20px] max-w-[900px]">
-
-            {/* ── Section A: Financial Inputs ─── */}
-            <div data-fade className="mb-[20px]">
-              <SectionHeading>Financial Inputs</SectionHeading>
-              <div className="bg-white rounded-[14px] border border-black/8 p-[16px] space-y-[16px]">
-
-                {/* Monthly Sales Volume slider */}
-                <Slider
-                  label="Monthly Sales Volume"
-                  value={config.monthlySalesVolume}
-                  min={20}
-                  max={400}
-                  step={5}
-                  format={(v) => `${v} units`}
-                  benchmark="Used to calculate frontline gap holding cost formula"
-                  onChange={(v) => set("monthlySalesVolume", v)}
-                />
-
-                <div className="border-t border-black/6" />
-
-                {/* Holding cost chips */}
-                <div>
-                  <FieldLabel hint="Industry range: $40-$50/car/day. Mid-volume store benchmark: $46.44 (playbook 5-step formula)">
-                    Holding Cost / Day
-                  </FieldLabel>
-                  <div className="flex items-center gap-[6px] flex-wrap">
-                    {HOLDING_COST_CHIPS.map((chip) => (
-                      <button
-                        key={chip}
-                        type="button"
-                        onClick={() => setHoldingCostChip(chip)}
-                        className={`h-[28px] px-[10px] rounded-full text-[11px] font-semibold border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
-                          config.holdingCostChip === chip
-                            ? "bg-[#4600F2] text-white border-[#4600F2]"
-                            : "bg-white text-black/60 border-black/15 hover:border-[#4600F2]/40"
+            {/* Step tabs with connector */}
+            <div className="flex items-stretch gap-[6px] mb-[20px]">
+              {STEPS.map((s, idx) => {
+                const isActive = step === s.key;
+                const isDone = step > s.key;
+                return (
+                  <div key={s.key} className="flex-1 flex items-center gap-[6px]">
+                    <button
+                      type="button"
+                      onClick={() => setStep(s.key)}
+                      className={`flex-1 rounded-[12px] border-2 px-[14px] py-[12px] flex items-center gap-[12px] transition-all text-left ${
+                        isActive
+                          ? "border-[#4600F2] bg-white shadow-[0_4px_14px_rgba(70,0,242,0.15)]"
+                          : isDone
+                          ? "border-[#4600F2]/20 bg-[#F4F0FF] hover:border-[#4600F2]/40"
+                          : "border-dashed border-black/15 bg-white/40 hover:border-[#4600F2]/30"
+                      }`}
+                    >
+                      <span
+                        className={`size-[34px] rounded-full flex items-center justify-center text-[14px] font-bold font-['Inter:Bold',sans-serif] shrink-0 transition-colors ${
+                          isActive
+                            ? "bg-[#4600F2] text-white shadow-[0_3px_10px_rgba(70,0,242,0.35)]"
+                            : isDone
+                            ? "bg-[#4600F2]/15 text-[#4600F2]"
+                            : "bg-black/5 text-black/35"
                         }`}
                       >
-                        {chip}
-                      </button>
-                    ))}
-                    {config.holdingCostChip === "Custom" && (
-                      <div className="flex items-center h-[28px] bg-[#F4F0FF] rounded-[8px] px-[8px] border border-[rgba(70,0,242,0.25)] focus-within:border-[#4600F2] ml-[2px]">
-                        <span className="text-[12px] text-[#4600F2] font-semibold mr-[2px]">$</span>
-                        <input
-                          type="number"
-                          value={config.holdingCostPerDay}
-                          onChange={(e) => set("holdingCostPerDay", Number(e.target.value) || 0)}
-                          className="w-[48px] bg-transparent outline-none text-[13px] font-bold text-[#4600F2] font-['Inter:Bold',sans-serif]"
-                        />
-                        <span className="text-[10px] text-[#4600F2]/60 ml-[2px]">/day</span>
+                        {isDone ? <Check size={15} strokeWidth={3} /> : s.key}
+                      </span>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-[9px] font-bold uppercase tracking-[0.8px] mb-[2px] font-['Inter:Bold',sans-serif] ${
+                            isActive
+                              ? "text-[#4600F2]"
+                              : isDone
+                              ? "text-[#4600F2]/70"
+                              : "text-black/35"
+                          }`}
+                        >
+                          Step {s.key}
+                        </p>
+                        <p
+                          className={`text-[12px] font-bold truncate font-['Inter:Bold',sans-serif] ${
+                            isActive ? "text-[#0a0a0a]" : "text-black/55"
+                          }`}
+                        >
+                          {s.label}
+                        </p>
+                      </div>
+                    </button>
+                    {idx < STEPS.length - 1 && (
+                      <div className="flex items-center gap-[2px] px-[2px] shrink-0">
+                        <span className="size-[3px] rounded-full bg-black/20" />
+                        <span className="size-[3px] rounded-full bg-black/20" />
+                        <span className="size-[3px] rounded-full bg-black/20" />
                       </div>
                     )}
                   </div>
-                  <p className="mt-[6px] text-[10px] text-black/40 font-['Inter:Regular',sans-serif]">
-                    40 cars x 10 extra days = ${(40 * 10 * config.holdingCostPerDay).toLocaleString()} in avoidable holding cost
-                  </p>
-                </div>
-              </div>
+                );
+              })}
             </div>
 
-            {/* ── Section B: Monthly Opportunity Breakdown ─── */}
-            <div data-fade className="mb-[20px]">
-              <SectionHeading>Monthly Opportunity Breakdown</SectionHeading>
-              <div className="flex gap-[10px]">
-                <ImpactCard
-                  icon={<Camera size={14} strokeWidth={2.5} />}
-                  label="Photography Cost"
-                  value={
-                    opp.photographyCostMonthly >= 1000
-                      ? `$${Math.round(opp.photographyCostMonthly / 1000)}K`
-                      : `$${opp.photographyCostMonthly.toLocaleString()}`
-                  }
-                  sub={
-                    config.monthlyPhotographySpend
-                      ? `Current monthly spend: ${config.monthlyPhotographySpend}`
-                      : `$${config.perVinCost}/car x ${config.totalInventory} units on lot`
-                  }
-                  accent="#0891B2"
-                />
-                <ImpactCard
-                  icon={<Clock size={14} strokeWidth={2.5} />}
-                  label="Frontline Gap Cost"
-                  value={`$${Math.round(opp.frontlineMonthly / 1000)}K`}
-                  sub={`${opp.frontlineGapDays} days above 1-day target x $${config.holdingCostPerDay}/day x ${config.monthlySalesVolume} units`}
-                  accent="#F59E0B"
-                />
-                <ImpactCard
-                  icon={<DollarSign size={14} strokeWidth={2.5} />}
-                  label="Aged Inventory Exposure"
-                  value={`$${Math.round(opp.agedMonthly / 1000)}K`}
-                  sub={`~${opp.agedVehicles} vehicles at 45+ days. Break-even at day ${opp.breakEvenDay}`}
-                  accent="#4600F2"
-                />
-              </div>
-            </div>
-
-            {/* ── Section C: How the gap is calculated (collapsible) ─── */}
-            <div data-fade className="mb-[20px]">
-              <button
-                type="button"
-                onClick={() => setShowBreakdown((v) => !v)}
-                className="inline-flex items-center gap-[6px] text-[12px] font-semibold text-black/55 hover:text-[#4600F2] transition-colors mb-[10px] font-['Inter:Semi_Bold',sans-serif]"
-              >
-                {showBreakdown ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                {showBreakdown ? "Hide" : "Show"} calculation breakdown
-              </button>
-
-              {showBreakdown && (
-                <div className="rounded-[12px] border border-black/8 bg-white overflow-hidden text-[12px]">
-                  <div className="px-[16px] py-[10px] bg-[#F4F0FF] border-b border-black/8">
-                    <span className="font-bold text-[#4600F2] font-['Inter:Bold',sans-serif]">
-                      How the monthly gap is calculated
-                    </span>
-                  </div>
-                  {[
-                    {
-                      label: "Media Gap",
-                      detail: `${opp.vehiclesNoPhotos} vehicles x $220/wk x 4 weeks`,
-                      sub: `Est. ${opp.pctWithoutPhotos}% without photos based on photography process`,
-                      value: opp.mediaGapMonthly,
-                      color: "#EF4444",
-                    },
-                    {
-                      label: "Frontline Gap",
-                      detail: `${opp.frontlineGapDays} extra days x $${config.holdingCostPerDay} x ${config.monthlySalesVolume} units`,
-                      sub: "Days above Studio AI 1-day target",
-                      value: opp.frontlineMonthly,
-                      color: "#F59E0B",
-                    },
-                    {
-                      label: "Aged Inventory (45+ days)",
-                      detail: `${opp.agedVehicles} vehicles x $${config.holdingCostPerDay}/day x 30 days`,
-                      sub: "~15% of lot beyond the break-even threshold",
-                      value: opp.agedMonthly,
-                      color: "#4600F2",
-                    },
-                  ].map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between px-[16px] py-[11px] border-b border-black/5 last:border-0"
-                    >
-                      <div>
-                        <p className="font-semibold text-[#0a0a0a] font-['Inter:Semi_Bold',sans-serif]">
-                          {row.label}
-                        </p>
-                        <p className="text-black/45 font-['Inter:Regular',sans-serif] mt-[1px]">
-                          {row.detail}
-                        </p>
-                        <p className="text-black/30 font-['Inter:Regular',sans-serif] mt-[1px] text-[11px]">
-                          {row.sub}
-                        </p>
-                      </div>
-                      <span
-                        className="font-bold font-['Inter:Bold',sans-serif] text-[14px] shrink-0 ml-[16px] px-[10px] py-[4px] rounded-[8px]"
-                        style={{
-                          color: row.color,
-                          background: `${row.color}10`,
-                        }}
-                      >
-                        ${row.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                      </span>
+            {/* ─── STEP 1: Dealership profile ─── */}
+            {step === 1 && (
+              <div className="space-y-[16px]">
+                <div data-step-fade>
+                  <SectionCard
+                    eyebrow="Volume"
+                    title="Inventory & throughput"
+                    badge
+                    badgeKind="required"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
+                      <MetricCard
+                        label="Units on lot"
+                        value={config.totalInventory}
+                        suffix="cars"
+                        min={50}
+                        max={2000}
+                        step={10}
+                        onChange={(v) => set("totalInventory", v)}
+                        benchmarkLabel="Top dealer range"
+                        benchmarkValue="500–1,000"
+                      />
+                      <MetricCard
+                        label="Monthly sales volume"
+                        value={config.monthlySalesVolume}
+                        suffix="units/mo"
+                        min={20}
+                        max={400}
+                        step={5}
+                        onChange={(v) => set("monthlySalesVolume", v)}
+                        benchmarkLabel="Industry turn target"
+                        benchmarkValue="1.6–2.0×"
+                      />
                     </div>
-                  ))}
-                  <div className="flex items-center justify-between px-[16px] py-[12px] bg-[#F4F0FF]">
-                    <span className="font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif]">
-                      Total monthly opportunity
-                    </span>
-                    <span
-                      className="font-bold text-[#4600F2] text-[15px] font-['Inter:Bold',sans-serif] px-[12px] py-[5px] rounded-[8px]"
-                      style={{ background: "rgba(70,0,242,0.08)" }}
-                    >
-                      ${opp.totalMonthly.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            {/* ── What Studio AI closes ─── */}
+                    <div className="mt-[14px] rounded-[10px] bg-[#F4F0FF] border border-[#4600F2]/15 px-[14px] py-[10px] flex items-center justify-between">
+                      <p className="text-[11px] text-[#4600F2]/85 font-['Inter:Regular',sans-serif]">
+                        Inventory turn rate{" "}
+                        <span className="font-bold">
+                          {config.totalInventory > 0
+                            ? (config.monthlySalesVolume / config.totalInventory).toFixed(2)
+                            : "0.00"}
+                          ×
+                        </span>
+                        {" "}· target 1.6–2.0×
+                      </p>
+                    </div>
+                  </SectionCard>
+                </div>
+
+                <div data-step-fade>
+                  <SectionCard
+                    eyebrow="Footprint"
+                    title="Rooftops"
+                    badge
+                    badgeKind="required"
+                  >
+                    <FieldLabel
+                      required
+                      error={showErrors && step === 1 && step1Missing.numRooftops}
+                    >
+                      Number of rooftops
+                    </FieldLabel>
+                    <div
+                      className={`rounded-[10px] transition-colors ${
+                        showErrors && step === 1 && step1Missing.numRooftops
+                          ? "ring-1 ring-[#EF4444]/50 p-[6px] -m-[6px]"
+                          : ""
+                      }`}
+                    >
+                      <ChipGroup
+                        options={ROOFTOP_OPTIONS}
+                        value={config.numRooftops}
+                        onChange={(v) => set("numRooftops", v)}
+                      />
+                    </div>
+                  </SectionCard>
+                </div>
+              </div>
+            )}
+
+            {/* ─── STEP 2: Performance & spend ─── */}
+            {step === 2 && (
+              <div className="space-y-[16px]">
+                <div data-step-fade>
+                  <SectionCard
+                    eyebrow="Current workflow"
+                    title="Photo & listing process"
+                    badge
+                    badgeKind="required"
+                  >
+                    <div className="space-y-[18px]">
+                      <div>
+                        <FieldLabel
+                          required
+                          error={showErrors && step === 2 && step2Missing.daysToLiveChip}
+                        >
+                          Avg days from acquisition to listing go-live
+                        </FieldLabel>
+                        <div
+                          className={`rounded-[10px] transition-colors ${
+                            showErrors && step === 2 && step2Missing.daysToLiveChip
+                              ? "ring-1 ring-[#EF4444]/50 p-[6px] -m-[6px]"
+                              : ""
+                          }`}
+                        >
+                          <ChipGroup
+                            options={DAYS_TO_LIVE_OPTIONS}
+                            value={config.daysToLiveChip}
+                            onChange={(v) => set("daysToLiveChip", v)}
+                          />
+                        </div>
+                        {config.daysToLiveChip && (
+                          <p className="mt-[8px] text-[11px] text-[#4600F2]/80 font-['Inter:Regular',sans-serif] inline-flex items-center gap-[6px]">
+                            <span className="size-[6px] rounded-full bg-[#10B981]" />
+                            Studio AI target: 1 day — saves{" "}
+                            <span className="font-bold">
+                              {opp.frontlineGapDays} days × ${config.holdingCostPerDay} ×{" "}
+                              {config.monthlySalesVolume} units/mo
+                            </span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <FieldLabel
+                          required
+                          error={showErrors && step === 2 && step2Missing.photographyProcess}
+                        >
+                          Current photography process
+                        </FieldLabel>
+                        <div
+                          className={`rounded-[10px] transition-colors ${
+                            showErrors && step === 2 && step2Missing.photographyProcess
+                              ? "ring-1 ring-[#EF4444]/50 p-[6px] -m-[6px]"
+                              : ""
+                          }`}
+                        >
+                          <ChipGroup
+                            options={PHOTO_PROCESS_OPTIONS}
+                            value={config.photographyProcess}
+                            onChange={(v) => set("photographyProcess", v)}
+                          />
+                        </div>
+                        {config.photographyProcess && (
+                          <p className="mt-[8px] text-[11px] text-black/55 font-['Inter:Regular',sans-serif]">
+                            Est.{" "}
+                            <span className="font-bold text-[#EF4444]">
+                              ~{PHOTO_PROCESS_GAP_MAP[config.photographyProcess]}%
+                            </span>{" "}
+                            of inventory without photos
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <FieldLabel>Media formats currently produced</FieldLabel>
+                        <MultiChipGroup
+                          options={MEDIA_FORMAT_OPTIONS}
+                          values={config.mediaFormats}
+                          onChange={(v) => set("mediaFormats", v)}
+                        />
+                      </div>
+                    </div>
+                  </SectionCard>
+                </div>
+
+                <div data-step-fade>
+                  <SectionCard
+                    eyebrow="Friction"
+                    title="Biggest pain points"
+                    badge
+                    badgeKind="required"
+                  >
+                    <FieldLabel
+                      required
+                      error={showErrors && step === 2 && step2Missing.painPoints}
+                    >
+                      Select all that apply
+                    </FieldLabel>
+                    <div
+                      className={`rounded-[10px] transition-colors ${
+                        showErrors && step === 2 && step2Missing.painPoints
+                          ? "ring-1 ring-[#EF4444]/50 p-[6px] -m-[6px]"
+                          : ""
+                      }`}
+                    >
+                      <MultiChipGroup
+                        options={PAIN_POINT_OPTIONS}
+                        values={config.painPoints}
+                        onChange={(v) => set("painPoints", v)}
+                      />
+                    </div>
+                  </SectionCard>
+                </div>
+
+                <div data-step-fade>
+                  <SectionCard
+                    eyebrow="Deal economics"
+                    title="Assumptions"
+                    hint="Defaults pre-filled. Adjust if you have data."
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-[14px]">
+                      <MetricCard
+                        label="Holding cost / day"
+                        value={config.holdingCostPerDay}
+                        prefix="$"
+                        suffix="/day"
+                        min={30}
+                        max={60}
+                        step={1}
+                        onChange={(v) => {
+                          set("holdingCostPerDay", v);
+                          set("holdingCostChip", "Custom");
+                        }}
+                        badge="editable"
+                        benchmarkLabel="Mid-volume benchmark"
+                        benchmarkValue="$46/day"
+                      />
+                      <MetricCard
+                        label="Cost per VIN photo"
+                        value={config.perVinCost}
+                        prefix="$"
+                        suffix="/car"
+                        min={0}
+                        max={40}
+                        step={1}
+                        onChange={(v) => set("perVinCost", v)}
+                        badge="editable"
+                        benchmarkLabel="Industry baseline"
+                        benchmarkValue="$15–$25"
+                      />
+                    </div>
+
+                    <div className="mt-[16px]">
+                      <FieldLabel>Monthly photography spend</FieldLabel>
+                      <ChipGroup
+                        options={SPEND_OPTIONS}
+                        value={config.monthlyPhotographySpend}
+                        onChange={(v) => set("monthlyPhotographySpend", v)}
+                      />
+                    </div>
+                  </SectionCard>
+                </div>
+              </div>
+            )}
+
+            {/* ── OUTPUT BAR ─── */}
             <div
               data-fade
-              className="rounded-[14px] border border-[rgba(70,0,242,0.2)] bg-[rgba(70,0,242,0.04)] px-[20px] py-[16px] mb-[24px] flex items-center justify-between gap-[20px]"
+              className="mt-[20px] bg-white rounded-[16px] border border-black/8 px-[20px] py-[16px] flex items-center justify-between gap-[16px]"
             >
               <div>
-                <p className="text-[11px] uppercase tracking-[1px] font-bold text-[#4600F2] mb-[4px] font-['Inter:Bold',sans-serif]">
-                  What Studio AI closes
+                <p className="text-[10px] font-bold uppercase tracking-[1px] text-[#4600F2] mb-[3px] font-['Inter:Bold',sans-serif]">
+                  Output
                 </p>
                 <p className="text-[14px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif]">
-                  Fills {opp.vehiclesNoPhotos} photo gaps overnight.
-                  Frontline drops from {opp.currentDaysToFrontline} days to 1 day.
-                  Smart Campaigns auto-target {opp.agedVehicles} aged units.
+                  Gap analysis{" "}
+                  <span className="text-black/45 font-medium font-['Inter:Regular',sans-serif]">
+                    vs. top dealers
+                  </span>
                 </p>
               </div>
-              <div className="shrink-0 text-right">
-                <p className="text-[11px] uppercase tracking-[0.6px] font-semibold text-black/45 font-['Inter:Semi_Bold',sans-serif]">
-                  Monthly reclaim
-                </p>
+              <div className="text-right">
                 <p className="text-[28px] font-bold text-[#4600F2] font-['Inter:Bold',sans-serif] leading-none">
                   ${opp.totalMonthly.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                 </p>
+                <p className="mt-[3px] text-[10px] text-black/40 font-['Inter:Regular',sans-serif]">
+                  Monthly reclaimable
+                </p>
               </div>
             </div>
 
-          </div>
-          </div>
-
-          {/* ── STICKY BOTTOM: Launch CTA ─── */}
-          <div className="shrink-0 bg-white border-t border-black/8 px-[28px] py-[14px]">
-            <div className="max-w-[900px] flex items-center gap-[16px]">
-              <p className="flex-1 text-[11px] text-black/45 font-['Inter:Regular',sans-serif] leading-[15px]">
-                The demo will be pre-loaded with{" "}
-                <span className="font-semibold text-black/65">
-                  {config.dealershipName || "this dealership"}
+            {/* ── ERROR BANNER ─── */}
+            {showErrors && currentMissingList.length > 0 && (
+              <div className="mt-[16px] rounded-[12px] border border-[#EF4444]/30 bg-[#FEF2F2] px-[14px] py-[12px] flex items-start gap-[10px]">
+                <span className="size-[22px] rounded-full bg-[#EF4444]/15 flex items-center justify-center text-[#EF4444] shrink-0 mt-[1px]">
+                  <AlertCircle size={13} strokeWidth={2.5} />
                 </span>
-                's numbers and benchmarks.
-              </p>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-bold text-[#B91C1C] font-['Inter:Bold',sans-serif]">
+                    Fill the required fields before continuing
+                  </p>
+                  <p className="mt-[3px] text-[11px] text-[#B91C1C]/85 font-['Inter:Regular',sans-serif]">
+                    Missing:{" "}
+                    <span className="font-semibold">
+                      {currentMissingList.join(", ")}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP NAV ─── */}
+            <div className="mt-[16px] flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => onLaunch(config)}
-                className="shrink-0 h-[48px] px-[22px] rounded-[12px] text-white text-[14px] font-semibold font-['Inter:Semi_Bold',sans-serif] inline-flex items-center justify-center gap-[10px] transition-all hover:scale-[1.01] active:scale-[0.99]"
-                style={{
-                  background: "linear-gradient(90deg, #FF5C7A 0%, #B651D7 50%, #4600F2 100%)",
-                  boxShadow: "0 8px 20px rgba(70,0,242,0.28)",
-                }}
+                onClick={() => setStep(1)}
+                disabled={step === 1}
+                className={`h-[40px] px-[16px] rounded-[12px] text-[12px] font-semibold inline-flex items-center gap-[6px] border transition-colors font-['Inter:Semi_Bold',sans-serif] ${
+                  step === 1
+                    ? "border-black/8 text-black/25 cursor-not-allowed bg-white"
+                    : "border-black/15 bg-white text-black/65 hover:border-[#4600F2]/40 hover:text-[#4600F2]"
+                }`}
               >
-                <Sparkles size={15} strokeWidth={2.5} />
-                {config.dealershipName.trim()
-                  ? `Launch Demo for ${config.dealershipName.trim()}`
-                  : "Launch Demo"}
-                <ArrowRight size={15} strokeWidth={2.5} />
+                <ArrowLeft size={13} strokeWidth={2.5} />
+                Back
               </button>
-            </div>
-          </div>
 
+              {step === 1 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!canAdvance) {
+                      setShowErrors(true);
+                      return;
+                    }
+                    setStep(2);
+                  }}
+                  className="h-[40px] px-[18px] rounded-[12px] text-[12px] font-bold inline-flex items-center gap-[6px] transition-all font-['Inter:Bold',sans-serif] bg-[#4600F2] text-white hover:bg-[#3a00c9] active:scale-[0.98] shadow-[0_4px_14px_rgba(70,0,242,0.30)]"
+                >
+                  Next: Performance &amp; spend
+                  <ArrowRight size={13} strokeWidth={2.5} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!allValid) {
+                      setShowErrors(true);
+                      return;
+                    }
+                    onLaunch(config);
+                  }}
+                  className="h-[42px] px-[20px] rounded-[12px] text-[12px] font-bold inline-flex items-center gap-[8px] transition-all font-['Inter:Bold',sans-serif] text-white shadow-[0_8px_20px_rgba(70,0,242,0.28)] hover:scale-[1.01] active:scale-[0.99]"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #FF5C7A 0%, #B651D7 50%, #4600F2 100%)",
+                  }}
+                >
+                  <Sparkles size={13} strokeWidth={2.5} />
+                  {config.dealershipName.trim()
+                    ? `Launch demo for ${config.dealershipName.trim()}`
+                    : "Launch demo"}
+                  <ArrowRight size={13} strokeWidth={2.5} />
+                </button>
+              )}
+            </div>
+
+          </div>
         </div>
       </div>
     </div>

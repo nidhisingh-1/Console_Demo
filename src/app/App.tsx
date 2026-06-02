@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { DemoLandingScreen } from "./components/DemoLandingScreen";
 import { DemoSetupScreen } from "./components/DemoSetupScreen";
 import { DemoTabBar, type DemoTab } from "./components/DemoTabBar";
 import { Demo1 } from "./components/Demo1";
@@ -6,10 +7,10 @@ import { Demo2 } from "./components/Demo2";
 import { Demo3 } from "./components/Demo3";
 import { DEFAULT_DEMO_CONFIG, type DemoConfig } from "./types/demoConfig";
 
-type AppPhase = "setup" | "demo";
+type AppPhase = "landing" | "setup" | "demo";
 
 export default function App() {
-  const [phase, setPhase] = useState<AppPhase>("setup");
+  const [phase, setPhase] = useState<AppPhase>("landing");
   // Captured but not yet piped into individual demos — the setup screen serves
   // primarily as the discovery landing for now.
   const [, setDemoConfig] = useState<DemoConfig>(DEFAULT_DEMO_CONFIG);
@@ -19,6 +20,17 @@ export default function App() {
     setDemoConfig(config);
     setPhase("demo");
   }, []);
+
+  if (phase === "landing") {
+    return (
+      <div className="size-full overflow-auto">
+        <DemoLandingScreen
+          onCreateNewDemo={() => setPhase("setup")}
+          onOpenPastDemo={() => setPhase("demo")}
+        />
+      </div>
+    );
+  }
 
   if (phase === "setup") {
     return (
