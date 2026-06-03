@@ -1,126 +1,28 @@
-import { ImageOff } from "lucide-react";
+import { Snowflake, BadgeCheck, Zap, Megaphone, CheckCircle2, Star } from "lucide-react";
 import imgRawExterior from "../../assets/vehicle/raw-exterior-1.jpg";
 import imgStudioExterior from "../../assets/vehicle/studio-exterior-1.jpg";
 import imgCgiFront from "../../assets/vehicle/cgi-front.jpg";
 import imgCgiTransformed from "../../assets/vehicle/cgi-transformed-front.jpg";
+import vinScanVideo from "../../assets/vehicle/vin-scan.mp4";
+import studioShootVideo from "../../assets/vehicle/studio-shoot.mp4";
 
-// ─── SmartMatch scan animation ────────────────────────────────────────────────
-// Shows a blank placeholder with a VIN number, then a purple scan line sweeps
-// left→right and the matched car image reveals — same 16/9 ratio as RawScanHero.
-const SMART_MATCH_CSS = `
-@keyframes smReveal {
-  0%, 12%   { clip-path: inset(0 100% 0 0); }
-  58%, 100% { clip-path: inset(0 0% 0 0); }
-}
-@keyframes smScanLine {
-  0%, 12%   { left: 0%; opacity: 1; }
-  58%       { left: 100%; opacity: 0; }
-  62%       { left: 0%; opacity: 0; }
-  70%, 100% { left: 0%; opacity: 0; }
-}
-@keyframes smScanPulse {
-  0%, 100% { box-shadow: 0 0 8px 3px rgba(127,106,242,0.55), 0 0 22px 6px rgba(127,106,242,0.22); }
-  50%      { box-shadow: 0 0 14px 5px rgba(127,106,242,0.85), 0 0 34px 10px rgba(127,106,242,0.42); }
-}
-@keyframes smVinGlow {
-  0%, 8%    { color: rgba(156,163,175,0.6); text-shadow: none; }
-  28%, 48%  { color: rgba(167,139,250,1); text-shadow: 0 0 20px rgba(127,106,242,0.8), 0 0 40px rgba(127,106,242,0.4); }
-  62%, 100% { color: rgba(255,255,255,0.85); text-shadow: none; }
-}
-@keyframes smFoundBadge {
-  0%, 42%   { opacity: 0; transform: scale(0.85); }
-  58%, 100% { opacity: 1; transform: scale(1); }
-}
-`;
-
+// ─── SmartMatch · VIN scan video ─────────────────────────────────────────────
+// Uses the supplied VIN scan MP4 as the hero animation.
 export function SmartMatchScanHero() {
   return (
-    <>
-      <style>{SMART_MATCH_CSS}</style>
-      <div
-        className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#111318]"
-        style={{ aspectRatio: "16/9" }}
-      >
-        {/* Base layer: "No Photo" placeholder with VIN number */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[14px]">
-          <ImageOff size={36} className="text-white/20" strokeWidth={1.5} />
-          <div
-            className="font-mono text-[13px] font-bold tracking-[3px] uppercase px-[12px] py-[6px] rounded-[6px] border border-white/10 bg-white/5"
-            style={{
-              animation: "smVinGlow 4.5s cubic-bezier(0.45,0,0.55,1) 0.5s infinite",
-              color: "rgba(156,163,175,0.6)",
-            }}
-          >
-            VIN5N1AT3CBXSC
-          </div>
-        </div>
-
-        {/* Reveal layer: matched car image */}
-        <div
-          className="absolute inset-0"
-          style={{ animation: "smReveal 4.5s cubic-bezier(0.45,0,0.55,1) 0.5s infinite" }}
-        >
-          <img src={imgStudioExterior} alt="Matched media" className="w-full h-full object-cover" />
-        </div>
-
-        {/* Glowing purple scan line */}
-        <div
-          className="absolute inset-y-0 w-[2px]"
-          style={{
-            background:
-              "linear-gradient(180deg, transparent 0%, #7F6AF2 18%, #B651D7 50%, #7F6AF2 82%, transparent 100%)",
-            animation:
-              "smScanLine 4.5s cubic-bezier(0.45,0,0.55,1) 0.5s infinite, smScanPulse 1.1s ease-in-out infinite",
-          }}
-        />
-
-        {/* Top-left: scanning status */}
-        <div className="absolute top-[10px] left-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/60 backdrop-blur-sm">
-          <span className="size-[5px] rounded-full bg-[#A78BFA] animate-pulse" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
-            Scanning VIN
-          </span>
-        </div>
-
-        {/* Top-right: VIN Found badge (appears after scan) */}
-        <div
-          className="absolute top-[10px] right-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px]"
-          style={{
-            background: "rgba(127,106,242,0.82)",
-            backdropFilter: "blur(4px)",
-            animation: "smFoundBadge 4.5s cubic-bezier(0.45,0,0.55,1) 0.5s infinite",
-          }}
-        >
-          <span className="size-[5px] rounded-full bg-white" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
-            VIN Found
-          </span>
-        </div>
-
-        {/* Bottom-left: No photo yet */}
-        <div className="absolute bottom-[10px] left-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/60 backdrop-blur-sm">
-          <span className="size-[5px] rounded-full bg-[#9CA3AF]" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-[#D1D5DB] font-['Inter:Bold',sans-serif]">
-            No photo yet
-          </span>
-        </div>
-
-        {/* Bottom-right: Matched media badge (appears after scan) */}
-        <div
-          className="absolute bottom-[10px] right-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px]"
-          style={{
-            background: "rgba(127,106,242,0.82)",
-            backdropFilter: "blur(4px)",
-            animation: "smFoundBadge 4.5s cubic-bezier(0.45,0,0.55,1) 0.5s infinite",
-          }}
-        >
-          <span className="size-[5px] rounded-full bg-white" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
-            Matched media
-          </span>
-        </div>
-      </div>
-    </>
+    <div
+      className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#0d0d0d]"
+      style={{ aspectRatio: "16/9" }}
+    >
+      <video
+        src={vinScanVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+    </div>
   );
 }
 
@@ -210,214 +112,440 @@ export function StockPhotoGridHero() {
   );
 }
 
-// ─── Syndication hero ────────────────────────────────────────────────────────
+// ─── Syndication · Publishing broadcast animation ────────────────────────────
+// A car listing in the centre broadcasts outward — ripple waves emanate, each
+// platform tile fades in around the perimeter and gets a "PUBLISHED" stamp in
+// sequence. Final "All Live" badge once every platform is lit.
 const SYNDICATION_CSS = `
-@keyframes synCard {
-  0%   { opacity: 0; transform: translateY(6px) scale(0.93); }
-  8%   { opacity: 1; transform: translateY(0) scale(1); }
-  82%  { opacity: 1; transform: translateY(0) scale(1); }
-  94%  { opacity: 0; }
-  100% { opacity: 0; }
+@keyframes synRipple1 {
+  0%   { opacity: 0.6; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(2.2); }
 }
-@keyframes synLive {
-  0%, 8%  { opacity: 0; transform: scale(0.7); }
-  16%     { opacity: 1; transform: scale(1); }
-  82%     { opacity: 1; }
-  94%     { opacity: 0; }
-  100%    { opacity: 0; }
+@keyframes synRipple2 {
+  0%   { opacity: 0.5; transform: translate(-50%, -50%) scale(0.4); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(2.6); }
+}
+@keyframes synHubPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(70,0,242,0.55), 0 6px 18px rgba(70,0,242,0.45); }
+  50%      { box-shadow: 0 0 0 8px rgba(70,0,242,0.10), 0 6px 18px rgba(70,0,242,0.55); }
+}
+@keyframes synTileIn {
+  0%        { opacity: 0; transform: scale(0.7); }
+  60%, 100% { opacity: 1; transform: scale(1); }
+}
+@keyframes synStamp {
+  0%, 30%   { opacity: 0; transform: scale(0.5) rotate(-15deg); }
+  44%       { opacity: 1; transform: scale(1.15) rotate(-4deg); }
+  56%, 100% { opacity: 1; transform: scale(1) rotate(-4deg); }
 }
 @keyframes synAllLive {
-  0%, 64%  { opacity: 0; transform: translateX(6px); }
-  72%, 80% { opacity: 1; transform: translateX(0); }
-  92%      { opacity: 0; }
-  100%     { opacity: 0; }
+  0%, 84%   { opacity: 0; transform: translateY(4px); }
+  92%, 100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes synArrow {
+  0%, 18%   { opacity: 0; transform: scale(0.6); }
+  28%, 70%  { opacity: 1; transform: scale(1); }
+  82%, 100% { opacity: 0; }
 }
 `;
 
 export function SyndicationHero() {
-  const DUR = "7s";
+  const DUR = "5.6s";
+  // Platforms placed in a ring around the central hub
   const platforms = [
-    { name: "AutoTrader", short: "AT",   color: "#FF6600", delay: "0s",    liveDel: "0.55s" },
-    { name: "Cars.com",   short: "Cars", color: "#005B99", delay: "0.6s",  liveDel: "1.15s" },
-    { name: "KBB",        short: "KBB",  color: "#003087", delay: "1.2s",  liveDel: "1.75s" },
-    { name: "Facebook",   short: "FB",   color: "#1877F2", delay: "1.8s",  liveDel: "2.35s" },
-    { name: "Instagram",  short: "IG",   color: "#C13584", delay: "2.4s",  liveDel: "2.95s" },
-    { name: "Dealer Site",short: "Site", color: "#4600F2", delay: "3.0s",  liveDel: "3.55s" },
+    { short: "AT",   name: "AutoTrader", color: "#FF6600", x: "8%",  y: "20%", tileDelay: "0.4s",  stampDelay: "0.8s" },
+    { short: "Cars", name: "Cars.com",   color: "#005B99", x: "78%", y: "20%", tileDelay: "0.8s",  stampDelay: "1.2s" },
+    { short: "KBB",  name: "KBB",        color: "#003087", x: "8%",  y: "72%", tileDelay: "1.2s",  stampDelay: "1.6s" },
+    { short: "FB",   name: "Facebook",   color: "#1877F2", x: "78%", y: "72%", tileDelay: "1.6s",  stampDelay: "2.0s" },
+    { short: "IG",   name: "Instagram",  color: "#C13584", x: "78%", y: "46%", tileDelay: "2.0s",  stampDelay: "2.4s" },
+    { short: "Site", name: "Dealer Site",color: "#4600F2", x: "8%",  y: "46%", tileDelay: "2.4s",  stampDelay: "2.8s" },
   ];
   return (
     <>
       <style>{SYNDICATION_CSS}</style>
-      <div className="w-full rounded-[14px] border border-black/8 bg-[#111318] overflow-hidden p-[10px]">
-        <div className="grid grid-cols-3 gap-[5px]">
-          {platforms.map((p, i) => (
+      <div
+        className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#0d0d12]"
+        style={{
+          aspectRatio: "16/9",
+          backgroundImage:
+            "radial-gradient(ellipse at center, #1a1d2e 0%, #0d0d12 70%)",
+        }}
+      >
+        {/* Broadcast ripples emanating from centre */}
+        {[0, 1].map((i) => (
+          <span
+            key={i}
+            className="absolute top-1/2 left-1/2 rounded-full border border-[#4600F2]/45"
+            style={{
+              width: "120px",
+              height: "120px",
+              animation: `${i === 0 ? "synRipple1" : "synRipple2"} ${i === 0 ? "3.5s" : "4.2s"} cubic-bezier(0.25,0.46,0.45,0.94) ${i * 0.6}s infinite`,
+            }}
+          />
+        ))}
+
+        {/* Central listing hub */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[12px] overflow-hidden border-2 border-white/15"
+          style={{
+            width: "30%",
+            aspectRatio: "16/9",
+            animation: "synHubPulse 1.8s ease-in-out infinite",
+          }}
+        >
+          <img src={imgCgiTransformed} alt="Listing" className="w-full h-full object-cover" />
+          <div className="absolute inset-x-0 bottom-0 px-[6px] py-[3px] bg-black/65 backdrop-blur-sm">
+            <p className="text-[7px] font-bold uppercase tracking-[0.6px] text-[#A78BFA] leading-none font-['Inter:Bold',sans-serif]">
+              VIN5N1AT3CBXSC
+            </p>
+          </div>
+        </div>
+
+        {/* Platform tiles around the perimeter */}
+        {platforms.map((p, i) => (
+          <div
+            key={p.short}
+            className="absolute"
+            style={{
+              left: p.x,
+              top: p.y,
+              width: "14%",
+              aspectRatio: "1/1",
+              animation: `synTileIn ${DUR} ease-out ${p.tileDelay} infinite`,
+              opacity: 0,
+            }}
+          >
             <div
-              key={i}
-              className="relative overflow-hidden rounded-[7px]"
-              style={{ aspectRatio: "4/3", opacity: 0, animation: `synCard ${DUR} ease-out ${p.delay} infinite` }}
+              className="relative w-full h-full rounded-[8px] overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.40)]"
+              style={{
+                background: `linear-gradient(135deg, ${p.color}EE 0%, ${p.color} 100%)`,
+              }}
             >
-              <div className="absolute top-0 left-0 right-0 h-[3px] z-[1]" style={{ background: p.color }} />
-              <img src={i % 2 === 0 ? imgCgiTransformed : imgStudioExterior} alt={p.name} className="w-full h-full object-cover" />
-              <div
-                className="absolute bottom-[4px] left-[4px] px-[5px] py-[2px] rounded-[3px] text-[7.5px] font-bold text-white uppercase tracking-[0.4px] font-['Inter:Bold',sans-serif]"
-                style={{ background: `${p.color}DD` }}
-              >
-                {p.short}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[11px] font-black uppercase tracking-[0.5px] text-white font-['Inter:Bold',sans-serif]">
+                  {p.short}
+                </span>
               </div>
+              {/* Published stamp */}
               <div
-                className="absolute bottom-[4px] right-[4px] flex items-center gap-[2px] px-[5px] py-[2px] rounded-[3px] text-[7.5px] font-bold text-white font-['Inter:Bold',sans-serif]"
-                style={{ background: "rgba(16,185,129,0.9)", opacity: 0, animation: `synLive ${DUR} ease-out ${p.liveDel} infinite` }}
+                className="absolute -bottom-[5px] -right-[5px] inline-flex items-center gap-[3px] px-[5px] py-[2px] rounded-[4px] bg-[#10B981] text-white text-[7px] font-black uppercase tracking-[0.6px] font-['Inter:Bold',sans-serif] shadow-[0_2px_6px_rgba(16,185,129,0.55)]"
+                style={{
+                  animation: `synStamp ${DUR} ease-out ${p.stampDelay} infinite`,
+                  opacity: 0,
+                }}
               >
                 ✓ Live
               </div>
             </div>
-          ))}
+            {/* Connecting arrow toward centre (small dot trail) */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 flex items-center gap-[3px]"
+              style={{
+                left: i % 2 === 0 ? "100%" : undefined,
+                right: i % 2 === 1 ? "100%" : undefined,
+                paddingLeft: i % 2 === 0 ? "6px" : 0,
+                paddingRight: i % 2 === 1 ? "6px" : 0,
+                animation: `synArrow ${DUR} ease-out ${p.tileDelay} infinite`,
+                opacity: 0,
+              }}
+            >
+              {[0, 1, 2].map((d) => (
+                <span
+                  key={d}
+                  className="size-[3px] rounded-full"
+                  style={{ background: "#A78BFA", opacity: 0.4 + d * 0.2 }}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Top-left: broadcasting status */}
+        <div className="absolute top-[10px] left-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/60 backdrop-blur-sm">
+          <span className="size-[5px] rounded-full bg-[#4600F2] animate-pulse" />
+          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
+            Broadcasting
+          </span>
         </div>
-        <div className="mt-[8px] flex items-center justify-between px-[1px]">
-          <div className="flex items-center gap-[5px]">
-            <span className="size-[5px] rounded-full bg-[#4600F2] animate-pulse" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.9px] text-white/65 font-['Inter:Bold',sans-serif]">
-              Syndicating to 6 platforms
-            </span>
-          </div>
-          <div className="flex items-center gap-[4px]" style={{ opacity: 0, animation: `synAllLive ${DUR} ease-out 3.55s infinite` }}>
-            <span className="size-[5px] rounded-full bg-[#10B981]" />
-            <span className="text-[9px] font-bold text-[#10B981] font-['Inter:Bold',sans-serif]">All live</span>
-          </div>
+
+        {/* Top-right: All Live confirmation */}
+        <div
+          className="absolute top-[10px] right-[10px] inline-flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px]"
+          style={{
+            background: "rgba(16,185,129,0.92)",
+            backdropFilter: "blur(4px)",
+            animation: `synAllLive ${DUR} ease-out 0s infinite`,
+            opacity: 0,
+            boxShadow: "0 4px 12px rgba(16,185,129,0.40)",
+          }}
+        >
+          <CheckCircle2 size={11} strokeWidth={2.8} className="text-white" />
+          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
+            All 6 Live
+          </span>
         </div>
       </div>
     </>
   );
 }
 
-// ─── Smart Campaigns overlay carousel ───────────────────────────────────────
+// ─── Smart Campaigns · Banner / billboard application ───────────────────────
+// Cycles through 4 campaign treatments on a single hero canvas:
+//   1. Aging — red price-drop top + bottom banners (car visible)
+//   2. Promotional — full dealer billboard (no car)
+//   3. Festive — holiday banners with snowfall (car visible)
+//   4. Certified — blue side ribbon + inspection badge (car visible)
 const SMART_CAMPAIGNS_CSS = `
-@keyframes scO1 {
-  0%    { opacity: 0; transform: translateX(14px); }
-  6%    { opacity: 1; transform: translateX(0); }
-  27%   { opacity: 1; transform: translateX(0); }
-  33%   { opacity: 0; transform: translateX(-14px); }
-  33.1% { opacity: 0; transform: translateX(14px); }
-  100%  { opacity: 0; transform: translateX(14px); }
+@keyframes scPhase1 { 0%, 22% { opacity: 1; } 25%, 100% { opacity: 0; } }
+@keyframes scPhase2 { 0%, 22% { opacity: 0; } 25%, 47% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes scPhase3 { 0%, 47% { opacity: 0; } 50%, 72% { opacity: 1; } 75%, 100% { opacity: 0; } }
+@keyframes scPhase4 { 0%, 72% { opacity: 0; } 75%, 97% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes scDot1 { 0%, 22% { background: #FFFFFF; transform: scale(1.4); } 25%, 100% { background: rgba(255,255,255,0.35); transform: scale(1); } }
+@keyframes scDot2 { 0%, 22% { background: rgba(255,255,255,0.35); transform: scale(1); } 25%, 47% { background: #FFFFFF; transform: scale(1.4); } 50%, 100% { background: rgba(255,255,255,0.35); transform: scale(1); } }
+@keyframes scDot3 { 0%, 47% { background: rgba(255,255,255,0.35); transform: scale(1); } 50%, 72% { background: #FFFFFF; transform: scale(1.4); } 75%, 100% { background: rgba(255,255,255,0.35); transform: scale(1); } }
+@keyframes scDot4 { 0%, 72% { background: rgba(255,255,255,0.35); transform: scale(1); } 75%, 97% { background: #FFFFFF; transform: scale(1.4); } 100% { background: rgba(255,255,255,0.35); transform: scale(1); } }
+@keyframes scSnow {
+  0%   { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(220px) rotate(360deg); opacity: 0; }
 }
-@keyframes scO2 {
-  0%    { opacity: 0; transform: translateX(14px); }
-  33%   { opacity: 0; transform: translateX(14px); }
-  39%   { opacity: 1; transform: translateX(0); }
-  60%   { opacity: 1; transform: translateX(0); }
-  66%   { opacity: 0; transform: translateX(-14px); }
-  66.1% { opacity: 0; transform: translateX(14px); }
-  100%  { opacity: 0; transform: translateX(14px); }
-}
-@keyframes scO3 {
-  0%    { opacity: 0; transform: translateX(14px); }
-  66%   { opacity: 0; transform: translateX(14px); }
-  72%   { opacity: 1; transform: translateX(0); }
-  93%   { opacity: 1; transform: translateX(0); }
-  99%   { opacity: 0; transform: translateX(-14px); }
-  100%  { opacity: 0; transform: translateX(14px); }
-}
-@keyframes scDot1 {
-  0%, 33%, 100% { opacity: 0.3; transform: scale(1); }
-  6%, 27%       { opacity: 1;   transform: scale(1.4); }
-}
-@keyframes scDot2 {
-  0%, 100%  { opacity: 0.3; transform: scale(1); }
-  39%, 60%  { opacity: 1;   transform: scale(1.4); }
-}
-@keyframes scDot3 {
-  0%, 100%  { opacity: 0.3; transform: scale(1); }
-  72%, 93%  { opacity: 1;   transform: scale(1.4); }
+@keyframes scTitleSlide {
+  0%   { opacity: 0; transform: translateX(-12px); }
+  10%, 90% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(12px); }
 }
 `;
 
+const PHASES = [
+  { label: "Aging · Price Drop",       accent: "#DC2626" },
+  { label: "Promotional · Billboard",  accent: "#1D4ED8" },
+  { label: "Festive · Holiday",        accent: "#10B981" },
+  { label: "Certified · CPO",          accent: "#1E3A8A" },
+];
+
 export function SmartCampaignsHero() {
-  const DUR = "9s";
+  const DUR = "12s";
   return (
     <>
       <style>{SMART_CAMPAIGNS_CSS}</style>
       <div
-        className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#111318]"
+        className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#0d0d12]"
         style={{ aspectRatio: "16/9" }}
       >
-        <img src={imgCgiTransformed} alt="Car listing" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/25" />
 
-        <div className="absolute inset-0" style={{ animation: `scO1 ${DUR} ease-in-out infinite` }}>
+        {/* ─── Phase 1 · Aging — car visible with red banners ─── */}
+        <div
+          className="absolute inset-0"
+          style={{ animation: `scPhase1 ${DUR} ease-in-out infinite`, opacity: 0 }}
+        >
+          <img src={imgCgiTransformed} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div
-            className="absolute top-[10px] right-[10px] px-[9px] py-[4px] rounded-[7px] text-[9px] font-bold text-white uppercase tracking-[0.6px] font-['Inter:Bold',sans-serif]"
-            style={{ background: "linear-gradient(135deg,#DC2626,#EF4444)", boxShadow: "0 3px 10px rgba(220,38,38,0.5)" }}
+            className="absolute top-0 inset-x-0 flex items-center justify-between px-[14px] py-[6px] text-white"
+            style={{ background: "linear-gradient(90deg, #7F1D1D 0%, #DC2626 50%, #7F1D1D 100%)" }}
           >
-            Special Offer
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 px-[12px] py-[10px] flex items-center justify-between">
-            <span className="text-white text-[11px] font-semibold font-['Inter:Semi_Bold',sans-serif]">Finance from $299/mo</span>
-            <span className="text-[10px] text-white/65 font-['Inter:Regular',sans-serif]">0% APR available</span>
-          </div>
-          <div
-            className="absolute bottom-[10px] left-[10px] px-[7px] py-[2px] rounded-[4px] text-[8px] font-bold text-white/80 uppercase tracking-[0.8px] font-['Inter:Bold',sans-serif]"
-            style={{ background: "rgba(255,255,255,0.12)" }}
-          >
-            Promo Overlay
-          </div>
-        </div>
-
-        <div className="absolute inset-0" style={{ animation: `scO2 ${DUR} ease-in-out infinite` }}>
-          <div
-            className="absolute top-[10px] right-[10px] flex items-center gap-[5px] px-[9px] py-[4px] rounded-[7px] text-[9px] font-bold text-white uppercase tracking-[0.6px] font-['Inter:Bold',sans-serif]"
-            style={{ background: "rgba(245,158,11,0.92)", boxShadow: "0 3px 10px rgba(245,158,11,0.45)" }}
-          >
-            <span>38 Days on Lot</span>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 px-[12px] py-[10px] flex items-center justify-between">
-            <span className="text-white text-[11px] font-semibold font-['Inter:Semi_Bold',sans-serif]">Price reduced $1,200</span>
-            <span
-              className="px-[7px] py-[3px] rounded-[5px] text-[9px] font-bold text-white font-['Inter:Bold',sans-serif]"
-              style={{ background: "rgba(220,38,38,0.88)" }}
-            >
-              Act Now
+            <span className="inline-flex items-center gap-[5px] text-[10px] font-black uppercase tracking-[1.6px] font-['Inter:Bold',sans-serif]">
+              <Zap size={10} strokeWidth={3} fill="currentColor" />
+              Price Drop
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-[1.6px] font-['Inter:Bold',sans-serif]">
+              45+ Days
             </span>
           </div>
           <div
-            className="absolute bottom-[10px] left-[10px] px-[7px] py-[2px] rounded-[4px] text-[8px] font-bold text-white/80 uppercase tracking-[0.8px] font-['Inter:Bold',sans-serif]"
-            style={{ background: "rgba(255,255,255,0.12)" }}
+            className="absolute bottom-0 inset-x-0 flex items-center justify-between px-[14px] py-[7px] text-white"
+            style={{ background: "linear-gradient(90deg, #7F1D1D 0%, #B91C1C 100%)" }}
           >
-            Aged Inventory
+            <span className="text-[15px] font-black tracking-tight font-['Inter:Bold',sans-serif]">$2,500 OFF</span>
+            <span className="text-[9px] font-bold uppercase tracking-[1.2px] opacity-90 font-['Inter:Bold',sans-serif]">
+              Must Go · Limited Time
+            </span>
           </div>
         </div>
 
-        <div className="absolute inset-0" style={{ animation: `scO3 ${DUR} ease-in-out infinite` }}>
+        {/* ─── Phase 2 · Promotional billboard (no car) ─── */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #0F1F4F 0%, #1D4ED8 45%, #2563EB 100%)",
+            animation: `scPhase2 ${DUR} ease-in-out infinite`,
+            opacity: 0,
+          }}
+        >
           <div
-            className="absolute top-[10px] right-[10px] px-[9px] py-[4px] rounded-[7px] text-[9px] font-bold text-white uppercase tracking-[0.6px] font-['Inter:Bold',sans-serif]"
-            style={{ background: "rgba(16,185,129,0.92)", boxShadow: "0 3px 10px rgba(16,185,129,0.45)" }}
-          >
-            Certified Pre-Owned
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 px-[12px] py-[10px] flex items-center gap-[6px]">
-            {["Free Delivery", "2-Year Warranty", "Remote Buying"].map((t, i) => (
-              <span key={i} className="flex items-center gap-[6px]">
-                {i > 0 && <span className="size-[3px] rounded-full bg-white/40" />}
-                <span className="text-white text-[11px] font-semibold font-['Inter:Semi_Bold',sans-serif]">{t}</span>
+            className="absolute inset-0 opacity-25"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(45deg, rgba(251,191,36,0.55) 0px, rgba(251,191,36,0.55) 2px, transparent 2px, transparent 60px)",
+            }}
+          />
+          <div className="absolute top-0 inset-x-0 h-[8px]" style={{ background: "linear-gradient(90deg, #FBBF24 0%, #F59E0B 100%)" }} />
+          <div className="absolute bottom-0 inset-x-0 h-[8px]" style={{ background: "linear-gradient(90deg, #FBBF24 0%, #F59E0B 100%)" }} />
+
+          <Star
+            size={32}
+            fill="#FBBF24"
+            strokeWidth={0}
+            className="absolute top-[14%] left-[6%] opacity-80"
+            style={{ transform: "rotate(-12deg)" }}
+          />
+          <Star
+            size={24}
+            fill="#FBBF24"
+            strokeWidth={0}
+            className="absolute bottom-[18%] right-[8%] opacity-70"
+            style={{ transform: "rotate(8deg)" }}
+          />
+
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-[16px]">
+            <p className="inline-flex items-center gap-[5px] text-[8px] font-bold uppercase tracking-[2.5px] text-[#FBBF24] mb-[6px] font-['Inter:Bold',sans-serif]">
+              <Star size={7} fill="currentColor" strokeWidth={0} />
+              AutoMart Premium
+              <Star size={7} fill="currentColor" strokeWidth={0} />
+            </p>
+            <p
+              className="text-[28px] font-black leading-[28px] mb-[4px] font-['Inter:Bold',sans-serif]"
+              style={{ textShadow: "0 3px 10px rgba(0,0,0,0.45)" }}
+            >
+              DEALS OF THE MONTH
+            </p>
+            <p className="text-[11px] font-black tracking-[1px] mt-[2px] font-['Inter:Bold',sans-serif] text-white/95">
+              0% APR · 60 MO · NO MONEY DOWN
+            </p>
+            <div className="mt-[10px] inline-flex items-center gap-[6px] px-[12px] py-[5px] rounded-[6px] bg-white text-[#1D4ED8] shadow-[0_4px_12px_rgba(0,0,0,0.30)]">
+              <Megaphone size={11} strokeWidth={2.5} />
+              <span className="text-[10px] font-black uppercase tracking-[1.2px] font-['Inter:Bold',sans-serif]">
+                VisitAutoMart.com
               </span>
-            ))}
-          </div>
-          <div
-            className="absolute bottom-[10px] left-[10px] px-[7px] py-[2px] rounded-[4px] text-[8px] font-bold text-white/80 uppercase tracking-[0.8px] font-['Inter:Bold',sans-serif]"
-            style={{ background: "rgba(255,255,255,0.12)" }}
-          >
-            Billboard
+            </div>
           </div>
         </div>
 
+        {/* ─── Phase 3 · Festive · holiday banners with snow ─── */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{ animation: `scPhase3 ${DUR} ease-in-out infinite`, opacity: 0 }}
+        >
+          <img src={imgStudioExterior} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          {/* Top red holiday banner */}
+          <div
+            className="absolute top-0 inset-x-0 flex items-center justify-center gap-[10px] py-[7px] text-white"
+            style={{ background: "linear-gradient(90deg, #7F1D1D 0%, #DC2626 50%, #7F1D1D 100%)" }}
+          >
+            <Snowflake size={11} strokeWidth={2.5} />
+            <span className="text-[12px] font-black uppercase tracking-[2.4px] font-['Inter:Bold',sans-serif]">
+              Happy Holidays
+            </span>
+            <Snowflake size={11} strokeWidth={2.5} />
+          </div>
+          {/* Snowflakes */}
+          {[8, 22, 35, 48, 60, 72, 85].map((left, i) => (
+            <span
+              key={i}
+              className="absolute text-white pointer-events-none"
+              style={{
+                left: `${left}%`,
+                top: 0,
+                animation: `scSnow 3.4s ease-in ${i * 0.4}s infinite`,
+                opacity: 0,
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.30))",
+              }}
+            >
+              <Snowflake size={i % 2 ? 8 : 12} strokeWidth={1.8} />
+            </span>
+          ))}
+          {/* Bottom green deals banner */}
+          <div
+            className="absolute bottom-0 inset-x-0 flex items-center justify-between px-[14px] py-[7px] text-white"
+            style={{ background: "linear-gradient(90deg, #064E3B 0%, #10B981 50%, #064E3B 100%)" }}
+          >
+            <span className="text-[11px] font-black uppercase tracking-[1.2px] font-['Inter:Bold',sans-serif]">
+              December Deals
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-[1.2px] font-['Inter:Bold',sans-serif]">
+              Up to $5,000 Off
+            </span>
+          </div>
+        </div>
+
+        {/* ─── Phase 4 · Certified · side ribbon ─── */}
+        <div
+          className="absolute inset-0 overflow-hidden"
+          style={{ animation: `scPhase4 ${DUR} ease-in-out infinite`, opacity: 0 }}
+        >
+          <img src={imgStudioExterior} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute top-[18px] left-0 flex items-center">
+            <div
+              className="flex items-center gap-[8px] pl-[12px] pr-[14px] py-[7px] text-white shadow-[0_5px_14px_rgba(29,78,216,0.45)]"
+              style={{
+                background: "linear-gradient(90deg, #1E3A8A 0%, #1D4ED8 100%)",
+                borderTopRightRadius: "8px",
+                borderBottomRightRadius: "8px",
+              }}
+            >
+              <BadgeCheck size={18} strokeWidth={2.5} className="shrink-0" />
+              <div className="leading-tight">
+                <p className="text-[8px] font-bold uppercase tracking-[1.2px] opacity-80 font-['Inter:Bold',sans-serif]">
+                  Certified Pre-Owned
+                </p>
+                <p className="text-[12px] font-black tracking-[0.3px] font-['Inter:Bold',sans-serif]">
+                  by AutoMart
+                </p>
+              </div>
+            </div>
+            <span
+              className="block w-[8px] h-[36px]"
+              style={{
+                background: "#1D4ED8",
+                clipPath: "polygon(0 0, 100% 50%, 0 100%)",
+              }}
+            />
+          </div>
+          <div className="absolute bottom-[14px] right-[14px] inline-flex items-center gap-[5px] bg-white/95 backdrop-blur-sm rounded-full px-[10px] py-[4px] shadow-[0_3px_8px_rgba(0,0,0,0.20)]">
+            <span className="size-[6px] rounded-full bg-[#10B981]" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.6px] text-[#1E3A8A] font-['Inter:Bold',sans-serif]">
+              172-Pt Inspection
+            </span>
+          </div>
+        </div>
+
+        {/* ─── Phase indicator (top-left) ─── */}
         <div className="absolute top-[10px] left-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/60 backdrop-blur-sm">
-          <span className="size-[5px] rounded-full bg-[#DC2626] animate-pulse" />
+          <span className="size-[5px] rounded-full bg-[#FBBF24] animate-pulse" />
           <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
-            Active Campaign
+            Applying campaign
           </span>
         </div>
 
-        <div className="absolute top-[10px] right-[10px] flex gap-[4px]" style={{ marginTop: 32 }}>
-          {(["scDot1", "scDot2", "scDot3"] as const).map((anim, i) => (
-            <span key={i} className="size-[5px] rounded-full bg-white" style={{ animation: `${anim} ${DUR} ease-in-out infinite` }} />
+        {/* ─── Active phase label ─── */}
+        {PHASES.map((p, i) => (
+          <div
+            key={i}
+            className="absolute top-[10px] right-[10px] px-[9px] py-[4px] rounded-[6px] text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]"
+            style={{
+              background: p.accent,
+              boxShadow: `0 3px 10px ${p.accent}66`,
+              animation: `scTitleSlide ${DUR} ease-in-out ${(i * 25) / 100 * 12}s infinite`,
+              opacity: 0,
+              animationDelay: `${i * 3}s`,
+              animationDuration: "3s",
+            }}
+          >
+            {p.label}
+          </div>
+        ))}
+
+        {/* ─── Dots (bottom-center) ─── */}
+        <div className="absolute bottom-[8px] left-1/2 -translate-x-1/2 flex items-center gap-[5px]">
+          {["scDot1", "scDot2", "scDot3", "scDot4"].map((anim, i) => (
+            <span
+              key={i}
+              className="size-[5px] rounded-full"
+              style={{
+                background: "rgba(255,255,255,0.35)",
+                animation: `${anim} ${DUR} ease-in-out infinite`,
+              }}
+            />
           ))}
         </div>
       </div>
@@ -425,79 +553,22 @@ export function SmartCampaignsHero() {
   );
 }
 
-// ─── Raw scan animation ───────────────────────────────────────────────────────
-const RAW_SCAN_CSS = `
-@keyframes studioReveal {
-  0%,8%    { clip-path: inset(0 100% 0 0); }
-  52%,62%  { clip-path: inset(0 0% 0 0); }
-  92%,100% { clip-path: inset(0 100% 0 0); }
-}
-@keyframes scanLineMove {
-  0%,8%    { left: 0%; opacity: 1; }
-  52%,62%  { left: 100%; opacity: 0; }
-  63%      { left: 0%; opacity: 0; }
-  70%,100% { left: 0%; opacity: 1; }
-}
-@keyframes scanPulse {
-  0%,100% { box-shadow: 0 0 8px 3px rgba(233,30,99,0.55), 0 0 22px 6px rgba(233,30,99,0.22); }
-  50%     { box-shadow: 0 0 14px 5px rgba(233,30,99,0.85), 0 0 34px 10px rgba(233,30,99,0.42); }
-}
-`;
-
+// ─── Smart Shoot · Studio video ──────────────────────────────────────────────
+// Uses the supplied Studio MP4 as the hero animation.
 export function RawScanHero() {
   return (
-    <>
-      <style>{RAW_SCAN_CSS}</style>
-      <div
-        className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#0d0d0d]"
-        style={{ aspectRatio: "16/9" }}
-      >
-        <img src={imgRawExterior} alt="Raw lot photo" className="absolute inset-0 w-full h-full object-cover" />
-
-        <div className="absolute inset-0" style={{ animation: "studioReveal 4s cubic-bezier(0.45,0,0.55,1) 1.2s infinite" }}>
-          <img src={imgStudioExterior} alt="Studio output" className="w-full h-full object-cover" />
-        </div>
-
-        <div
-          className="absolute inset-y-0 w-[2px]"
-          style={{
-            background:
-              "linear-gradient(180deg, transparent 0%, #E91E63 18%, #FF5C9A 50%, #E91E63 82%, transparent 100%)",
-            animation:
-              "scanLineMove 4s cubic-bezier(0.45,0,0.55,1) 1.2s infinite, scanPulse 1.1s ease-in-out infinite",
-          }}
-        />
-
-        <div className="absolute bottom-[10px] left-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/60 backdrop-blur-sm">
-          <span className="size-[5px] rounded-full bg-[#9CA3AF]" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-[#D1D5DB] font-['Inter:Bold',sans-serif]">
-            Raw lot photo
-          </span>
-        </div>
-        <div
-          className="absolute bottom-[10px] right-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px]"
-          style={{ background: "rgba(233,30,99,0.82)", backdropFilter: "blur(4px)" }}
-        >
-          <span className="size-[5px] rounded-full bg-white" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
-            Studio AI output
-          </span>
-        </div>
-
-        <div
-          className="absolute top-[10px] right-[10px] px-[10px] py-[5px] rounded-[8px] text-[11px] font-bold text-white font-['Inter:Bold',sans-serif]"
-          style={{ background: "linear-gradient(90deg, #FF5C9A 0%, #B651D7 100%)", boxShadow: "0 4px 14px rgba(182,81,215,0.45)" }}
-        >
-          Studio AI
-        </div>
-
-        <div className="absolute top-[10px] left-[10px] flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/60 backdrop-blur-sm">
-          <span className="size-[5px] rounded-full bg-[#E91E63] animate-pulse" />
-          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-white font-['Inter:Bold',sans-serif]">
-            Scanning
-          </span>
-        </div>
-      </div>
-    </>
+    <div
+      className="relative w-full overflow-hidden rounded-[14px] border border-black/8 bg-[#0d0d0d]"
+      style={{ aspectRatio: "16/9" }}
+    >
+      <video
+        src={studioShootVideo}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+    </div>
   );
 }
