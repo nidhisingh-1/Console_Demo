@@ -141,6 +141,17 @@ export interface PitchPanelProps extends PitchContent {
   completedSteps?: number;
   /** Dealer inputs from the setup screen — drives personalised metrics. */
   demoConfig?: DemoConfig;
+  /**
+   * Optional plan-specific addendum rendered in the pre-CTA pitch view, after
+   * "How it works". Used by Demo 3 (lite) to call out Pro-only features.
+   */
+  pitchExtraSection?: React.ReactNode;
+  /**
+   * Optional plan-specific addendum rendered in the post-CTA success view,
+   * after the metrics panel / feature cards. Used by Demo 3 (lite) to cross-sell
+   * Pro features that weren't generated this pass.
+   */
+  successExtraSection?: React.ReactNode;
 }
 
 const MAGENTA_GRAD = "linear-gradient(90deg, #FF5C9A 0%, #B651D7 100%)";
@@ -153,6 +164,7 @@ export function PitchPanel(props: PitchPanelProps) {
     channels, selectedChannels, onChannelToggle,
     success, locked,
     metricsStep, completedSteps, demoConfig,
+    pitchExtraSection, successExtraSection,
   } = props;
   // _comparison is destructured but not rendered here — the new pitch UI uses heroNode for visual storytelling.
   void _comparison;
@@ -507,6 +519,20 @@ export function PitchPanel(props: PitchPanelProps) {
                   ))}
                 </ul>
               )}
+            </div>
+          )}
+
+          {/* Plan-specific addendum (pre-CTA) — Demo 3 lite Pro upsell, etc. */}
+          {!success && pitchExtraSection && (
+            <div data-section className="mb-[20px]">
+              {pitchExtraSection}
+            </div>
+          )}
+
+          {/* Plan-specific addendum (post-CTA success) — Demo 3 lite Pro cross-sell. */}
+          {success && successExtraSection && (
+            <div data-section className="mb-[20px]">
+              {successExtraSection}
             </div>
           )}
 

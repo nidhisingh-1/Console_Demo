@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import {
   Monitor, Palette, Smartphone, Search, Rocket, Building2,
   Layers, Globe, Sparkles, Wand2, Send, Timer, Calendar,
+  Image as ImageIcon, RotateCw, Video, Lock, Check, ArrowRight,
 } from "lucide-react";
 import {
   RawScanHero, SmartMatchScanHero, StockPhotoGridHero,
@@ -458,7 +459,15 @@ export type Demo2Plan = "pro" | "lite";
 const LITE_LOCKED_BUCKETS: Set<BucketKey> = new Set(["nophoto", "aging"]);
 
 const UPGRADE_COPY: Record<BucketKey, { feature: string; tagline: string; bullets: string[] } | null> = {
-  raw: null,
+  raw: {
+    feature: "Smart Shoot — Pro",
+    tagline: "Lite generates studio images only. Pro adds immersive 360° spins and video walkarounds on every VIN.",
+    bullets: [
+      "Interactive 360° spins — exteriors and interiors, on every listing",
+      "Branded video walkarounds auto-generated from the same shoot",
+      "Higher VDP engagement and conversion vs. still-image-only listings",
+    ],
+  },
   nophoto: {
     feature: "SmartMatch",
     tagline: "Publish vehicles before the photoshoot — match media from your existing inventory and go live on Day 0.",
@@ -890,6 +899,140 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
           onAction = () => runTransform(activeBucket!);
         }
 
+        // ── Demo 3 (lite) Smart Shoot pitch — Pro plan upsell ─────────────
+        // Lite generates studio images only. 360 spins + video walkarounds
+        // are Pro-only and need to be called out both before and after the
+        // "Process all 89" CTA.
+        const isLiteRaw = plan === "lite" && activeBucket === "raw";
+
+        const litePitchAddendum = isLiteRaw ? (
+          <div className="rounded-[14px] border border-[#F59E0B]/35 bg-gradient-to-br from-[#FFFBEB] to-white p-[14px]">
+            <div className="flex items-center justify-between gap-[10px] mb-[10px]">
+              <p className="inline-flex items-center gap-[6px] text-[10px] font-bold uppercase tracking-[1.2px] text-[#B45309] font-['Inter:Bold',sans-serif]">
+                <Sparkles size={11} strokeWidth={2.5} />
+                Lite Plan
+              </p>
+              <span className="px-[7px] py-[2px] rounded-full bg-[#F59E0B]/15 text-[#B45309] text-[9px] font-bold uppercase tracking-[0.4px] font-['Inter:Bold',sans-serif]">
+                Images only
+              </span>
+            </div>
+            <p className="text-[12.5px] text-[#1F2937] font-['Inter:Medium',sans-serif] leading-[16px] mb-[12px]">
+              Smart Shoot on Lite processes still images for every VIN. 360° spins and video walkarounds are part of <span className="font-semibold text-[#0a0a0a]">Pro</span>.
+            </p>
+            <div className="grid grid-cols-3 gap-[6px]">
+              <div className="rounded-[10px] bg-white border border-[#10B981]/25 p-[10px] flex flex-col gap-[5px]">
+                <span className="size-[24px] rounded-[7px] bg-[#10B981]/12 text-[#047857] flex items-center justify-center">
+                  <ImageIcon size={13} strokeWidth={2.3} />
+                </span>
+                <p className="text-[10.5px] font-bold text-[#0a0a0a] font-['Inter:Bold',sans-serif] leading-[12px]">
+                  Studio Images
+                </p>
+                <p className="inline-flex items-center gap-[3px] text-[9.5px] font-semibold text-[#047857] font-['Inter:Semi_Bold',sans-serif]">
+                  <Check size={9} strokeWidth={3} />
+                  Included
+                </p>
+              </div>
+              <div className="rounded-[10px] bg-white border border-black/8 p-[10px] flex flex-col gap-[5px]">
+                <span className="size-[24px] rounded-[7px] bg-black/5 text-black/45 flex items-center justify-center">
+                  <RotateCw size={13} strokeWidth={2.3} />
+                </span>
+                <p className="text-[10.5px] font-bold text-black/55 font-['Inter:Bold',sans-serif] leading-[12px]">
+                  360° Spin
+                </p>
+                <p className="inline-flex items-center gap-[3px] text-[9.5px] font-semibold text-[#B45309] font-['Inter:Semi_Bold',sans-serif]">
+                  <Lock size={9} strokeWidth={2.5} />
+                  Pro only
+                </p>
+              </div>
+              <div className="rounded-[10px] bg-white border border-black/8 p-[10px] flex flex-col gap-[5px]">
+                <span className="size-[24px] rounded-[7px] bg-black/5 text-black/45 flex items-center justify-center">
+                  <Video size={13} strokeWidth={2.3} />
+                </span>
+                <p className="text-[10.5px] font-bold text-black/55 font-['Inter:Bold',sans-serif] leading-[12px]">
+                  Video Tour
+                </p>
+                <p className="inline-flex items-center gap-[3px] text-[9.5px] font-semibold text-[#B45309] font-['Inter:Semi_Bold',sans-serif]">
+                  <Lock size={9} strokeWidth={2.5} />
+                  Pro only
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null;
+
+        const liteSuccessAddendum = isLiteRaw ? (
+          <div
+            className="relative overflow-hidden rounded-[14px] p-[16px] text-white"
+            style={{
+              background:
+                "linear-gradient(135deg, #4600F2 0%, #6D32FF 55%, #B651D7 100%)",
+              boxShadow: "0 12px 28px rgba(70,0,242,0.30)",
+            }}
+          >
+            <Sparkles size={96} className="absolute -top-[14px] -right-[10px] text-white/10" strokeWidth={1.4} />
+            <div className="relative">
+              <p className="inline-flex items-center gap-[5px] px-[7px] py-[2px] rounded-full bg-white/18 text-[9px] font-bold uppercase tracking-[1.2px] mb-[8px] font-['Inter:Bold',sans-serif]">
+                <Sparkles size={9} strokeWidth={2.6} />
+                Unlock with Pro
+              </p>
+              <h3 className="text-[16px] font-bold font-['Inter:Bold',sans-serif] leading-[20px]">
+                Want immersive media too?
+              </h3>
+              <p className="mt-[5px] text-[12px] text-white/85 font-['Inter:Regular',sans-serif] leading-[16px]">
+                89 studio images are live. 360° spins and video walkarounds weren't generated on Lite — they're part of Pro.
+              </p>
+
+              <div className="mt-[12px] grid grid-cols-3 gap-[6px]">
+                <div className="rounded-[10px] bg-white/15 backdrop-blur-sm border border-white/20 p-[9px] flex flex-col gap-[4px]">
+                  <span className="size-[22px] rounded-[6px] bg-[#10B981] text-white flex items-center justify-center">
+                    <Check size={12} strokeWidth={3} />
+                  </span>
+                  <p className="text-[10px] font-bold font-['Inter:Bold',sans-serif] leading-[12px]">
+                    Studio Images
+                  </p>
+                  <p className="text-[9.5px] font-semibold text-white/85 font-['Inter:Semi_Bold',sans-serif]">
+                    89 generated
+                  </p>
+                </div>
+                <div className="rounded-[10px] bg-white/8 backdrop-blur-sm border border-white/15 p-[9px] flex flex-col gap-[4px]">
+                  <span className="size-[22px] rounded-[6px] bg-white/20 text-white/85 flex items-center justify-center">
+                    <RotateCw size={12} strokeWidth={2.3} />
+                  </span>
+                  <p className="text-[10px] font-bold text-white/85 font-['Inter:Bold',sans-serif] leading-[12px]">
+                    360° Spin
+                  </p>
+                  <p className="inline-flex items-center gap-[3px] text-[9.5px] font-semibold text-white/75 font-['Inter:Semi_Bold',sans-serif]">
+                    <Lock size={9} strokeWidth={2.5} />
+                    Not generated
+                  </p>
+                </div>
+                <div className="rounded-[10px] bg-white/8 backdrop-blur-sm border border-white/15 p-[9px] flex flex-col gap-[4px]">
+                  <span className="size-[22px] rounded-[6px] bg-white/20 text-white/85 flex items-center justify-center">
+                    <Video size={12} strokeWidth={2.3} />
+                  </span>
+                  <p className="text-[10px] font-bold text-white/85 font-['Inter:Bold',sans-serif] leading-[12px]">
+                    Video Tour
+                  </p>
+                  <p className="inline-flex items-center gap-[3px] text-[9.5px] font-semibold text-white/75 font-['Inter:Semi_Bold',sans-serif]">
+                    <Lock size={9} strokeWidth={2.5} />
+                    Not generated
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setUpgradeBucket("raw")}
+                className="mt-[14px] w-full h-[40px] rounded-[10px] bg-white text-[#4600F2] text-[12.5px] font-bold font-['Inter:Bold',sans-serif] inline-flex items-center justify-center gap-[7px] hover:scale-[1.01] active:scale-[0.99] transition-transform shadow-[0_4px_14px_rgba(0,0,0,0.18)]"
+              >
+                <Sparkles size={13} strokeWidth={2.6} />
+                Upgrade to Pro · Contact Sales
+                <ArrowRight size={13} strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+        ) : null;
+
         return (
           <PitchPanel
             open={pitchOpen}
@@ -903,6 +1046,8 @@ export function Demo2({ plan = "pro" }: Demo2Props = {}) {
             locked={isLocked}
             metricsStep={activeBucket ?? undefined}
             completedSteps={completedCount}
+            pitchExtraSection={litePitchAddendum}
+            successExtraSection={liteSuccessAddendum}
           />
         );
       })()}
